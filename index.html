@@ -481,7 +481,7 @@
             return generateId(32);
         }
 
-        // Create WORKING obfuscated loader script - Fixed key reconstruction
+        // Create WORKING obfuscated loader script - Fixed Lua 1-based indexing
         function createObfuscatedLoader(scriptId, apiKey) {
             const authKey = `${scriptId}_${apiKey}_fetch`;
             
@@ -508,8 +508,8 @@
                 [allParts[i], allParts[j]] = [allParts[j], allParts[i]];
             }
             
-            // Find indices of real parts (in order)
-            const realIndices = keyParts.map(part => allParts.indexOf(part));
+            // Find indices of real parts (in order) - MUST BE 1-BASED FOR LUA
+            const realIndices = keyParts.map(part => allParts.indexOf(part) + 1); // +1 for Lua 1-based indexing
             
             let obfuscatedLoader = `local loader = {}
 local parts = {}
@@ -519,7 +519,11 @@ local function getAuthKey()
     local indices = {${realIndices.join(', ')}}
     local key = ""
     for _, idx in ipairs(indices) do
-        key = key .. parts[idx]
+        if parts[idx] then
+            key = key .. parts[idx]
+        else
+            error("Invalid index: " .. tostring(idx))
+        end
     end
     return key
 end
@@ -562,7 +566,7 @@ local function loadScript()
     local userData = getUserData()
     
     print("DEBUG: Reconstructed auth key:", authKey)
-    print("DEBUG: Expected format: " .. "${scriptId}_${apiKey}_fetch")
+    print("DEBUG: Expected format: ${authKey}")
     
     local requestData = {
         auth_key = authKey,
@@ -612,7 +616,9 @@ local function loadScript()
     end
     
     print("DEBUG: Server response status:", response.StatusCode)
-    print("DEBUG: Server response body:", response.Body:sub(1, 200) .. "...")
+    if response.StatusCode ~= 200 then
+        print("DEBUG: Server response body:", response.Body)
+    end
     
     if response.StatusCode ~= 200 then
         error("Server error " .. response.StatusCode .. ": " .. (response.Body or "Unknown error"))
