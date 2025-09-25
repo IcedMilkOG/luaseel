@@ -481,150 +481,86 @@
             return generateId(32);
         }
 
-        // Create obfuscated loader script that fetches the real script
+        // Create working obfuscated loader script
         function createObfuscatedLoader(scriptId, apiKey) {
             const baseKey = scriptId + '_' + apiKey + '_fetch';
-            const parts = [];
-            const serverParts = ['luaseel', 'vercel', 'app'];
-            const endpointParts = ['api', 'fetch', 'script'];
             
-            // Break the key into random sized chunks
+            // Simple but effective obfuscation - split key into chunks
+            const keyParts = [];
             let remaining = baseKey;
             while (remaining.length > 0) {
-                const chunkSize = Math.floor(Math.random() * 4) + 2;
+                const chunkSize = Math.floor(Math.random() * 4) + 3;
                 const chunk = remaining.substring(0, chunkSize);
                 remaining = remaining.substring(chunkSize);
-                parts.push(chunk);
+                keyParts.push(chunk);
             }
             
-            // Add server URL parts disguised as random chunks
-            serverParts.forEach(part => parts.push(part));
-            endpointParts.forEach(part => parts.push(part));
-            
-            // Add many dummy parts to confuse analysis
-            for (let i = 0; i < 15; i++) {
-                parts.push(generateId(Math.floor(Math.random() * 6) + 2));
+            // Add some dummy data
+            const allParts = [...keyParts];
+            for (let i = 0; i < 8; i++) {
+                allParts.push(generateId(Math.floor(Math.random() * 5) + 3));
             }
             
-            // Shuffle all parts multiple times
-            for (let shuffle = 0; shuffle < 3; shuffle++) {
-                for (let i = parts.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [parts[i], parts[j]] = [parts[j], parts[i]];
-                }
+            // Shuffle all parts
+            for (let i = allParts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allParts[i], allParts[j]] = [allParts[j], allParts[i]];
             }
             
-            // Find indices for reconstruction
-            const keyIndices = [];
-            const serverIndices = [];
-            const endpointIndices = [];
-            
-            let keyChunks = [];
-            let remaining2 = baseKey;
-            while (remaining2.length > 0) {
-                const chunkSize = Math.floor(Math.random() * 4) + 2;
-                const chunk = remaining2.substring(0, chunkSize);
-                remaining2 = remaining2.substring(chunkSize);
-                keyChunks.push(chunk);
-            }
-            
-            keyChunks.forEach(chunk => {
-                keyIndices.push(parts.indexOf(chunk));
-            });
-            
-            serverParts.forEach(part => {
-                serverIndices.push(parts.indexOf(part));
-            });
-            
-            endpointParts.forEach(part => {
-                endpointIndices.push(parts.indexOf(part));
-            });
+            // Find indices of real key parts
+            const keyIndices = keyParts.map(part => allParts.indexOf(part));
             
             let obfuscatedLoader = `local loader = {}
-local chunks = {}
-${parts.map((part, index) => `chunks[${index + 1}] = "${part}"`).join('\n')}
+local parts = {}
+${allParts.map((part, index) => `parts[${index + 1}] = "${part}"`).join('\n')}
 
-local function buildKey()
+local function getKey()
     local indices = {${keyIndices.join(', ')}}
     local key = ""
     for _, idx in ipairs(indices) do
-        if chunks[idx] then
-            key = key .. chunks[idx]
+        if parts[idx] then
+            key = key .. parts[idx]
         end
     end
     return key
 end
 
-local function buildServer()
-    local indices = {${serverIndices.join(', ')}}
-    local parts = {}
-    for _, idx in ipairs(indices) do
-        if chunks[idx] then
-            table.insert(parts, chunks[idx])
-        end
-    end
-    return "https://" .. table.concat(parts, ".") .. "/"
-end
-
-local function buildEndpoint()
-    local indices = {${endpointIndices.join(', ')}}
-    local parts = {}
-    for _, idx in ipairs(indices) do
-        if chunks[idx] then
-            table.insert(parts, chunks[idx])
-        end
-    end
-    return table.concat(parts, "/")
-end
-
-local function collectUserData()
-    local userData = {
+local function getUserData()
+    local data = {
         timestamp = os.time(),
-        session_id = tostring(math.random(100000, 999999)) .. "_" .. tostring(os.time())
+        session = tostring(math.random(100000, 999999))
     }
     
     if game then
-        userData.env = "roblox"
-        userData.game_id = game.GameId or 0
-        userData.place_id = game.PlaceId or 0
+        data.env = "roblox"
+        data.game_id = game.GameId or 0
+        data.place_id = game.PlaceId or 0
         if game.Players and game.Players.LocalPlayer then
             local player = game.Players.LocalPlayer
-            userData.player = {
+            data.player = {
                 name = player.Name or "unknown",
                 user_id = player.UserId or 0,
                 account_age = player.AccountAge or 0
             }
         end
-    elseif jit then
-        userData.env = "luajit"
-        userData.version = jit.version or "unknown"
-    else
-        userData.env = "lua"
-        userData.version = _VERSION or "unknown"
     end
     
-    userData.executor = "unknown"
-    local executors = {
-        "syn", "Synapse", "krnl", "KRNL", "ScriptWare", 
-        "Oxygen", "Sentinel", "Proxo", "SirHurt", "Fluxus", "Delta"
-    }
+    data.executor = "unknown"
+    local executors = {"syn", "Synapse", "krnl", "KRNL", "ScriptWare", "Delta", "Fluxus"}
     for _, exec in ipairs(executors) do
         if _G[exec] or (getgenv and getgenv()[exec]) then
-            userData.executor = exec:lower()
+            data.executor = exec:lower()
             break
         end
     end
     
-    return userData
+    return data
 end
 
 local function loadScript()
-    local authKey = buildKey()
-    local serverUrl = buildServer()
-    local endpoint = buildEndpoint()
-    local fullUrl = serverUrl .. endpoint
-    
-    local userData = collectUserData()
+    local authKey = getKey()
+    local serverUrl = "https://luaseel.vercel.app/api/fetch/script"
+    local userData = getUserData()
     
     local requestData = {
         auth_key = authKey,
@@ -638,31 +574,28 @@ local function loadScript()
         
         if request then
             return request({
-                Url = fullUrl,
+                Url = serverUrl,
                 Method = "POST",
                 Headers = {
-                    ["Content-Type"] = "application/json",
-                    ["User-Agent"] = "LuaSeel-Loader/1.0"
+                    ["Content-Type"] = "application/json"
                 },
                 Body = jsonData
             })
         elseif http_request then
             return http_request({
-                Url = fullUrl,
-                Method = "POST", 
+                Url = serverUrl,
+                Method = "POST",
                 Headers = {
-                    ["Content-Type"] = "application/json",
-                    ["User-Agent"] = "LuaSeel-Loader/1.0"
+                    ["Content-Type"] = "application/json"
                 },
                 Body = jsonData
             })
         elseif syn and syn.request then
             return syn.request({
-                Url = fullUrl,
+                Url = serverUrl,
                 Method = "POST",
                 Headers = {
-                    ["Content-Type"] = "application/json",
-                    ["User-Agent"] = "LuaSeel-Loader/1.0"
+                    ["Content-Type"] = "application/json"
                 },
                 Body = jsonData
             })
@@ -672,12 +605,12 @@ local function loadScript()
     end)
     
     if not success or not response then
-        error("Failed to connect to Lua Seel server: " .. tostring(response))
+        error("Failed to connect: " .. tostring(response))
         return
     end
     
     if response.StatusCode ~= 200 then
-        error("Server returned error: " .. tostring(response.StatusCode))
+        error("Server error: " .. response.StatusCode .. " - " .. (response.Body or "Unknown error"))
         return
     end
     
@@ -687,19 +620,19 @@ local function loadScript()
     end)
     
     if not success or not responseData then
-        error("Invalid response from server")
+        error("Invalid server response")
         return
     end
     
     if responseData.success ~= true then
-        error("Authentication failed: " .. (responseData.message or "Unknown error"))
+        error("Authentication failed: " .. (responseData.message or "Access denied"))
         return
     end
     
     if responseData.script then
         local scriptFunc, loadError = loadstring(responseData.script)
         if not scriptFunc then
-            error("Script compilation error: " .. tostring(loadError))
+            error("Script compilation failed: " .. tostring(loadError))
             return
         end
         
