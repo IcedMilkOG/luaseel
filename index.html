@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lua Seel - Protected Script Hosting</title>
+    <title>Lua Seel - Secure Script Hosting</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,64 +14,71 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Consolas', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
             min-height: 100vh;
-            padding: 20px;
+            line-height: 1.5;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            background: #161b22;
+            min-height: 100vh;
+            border-left: 1px solid #21262d;
+            border-right: 1px solid #21262d;
         }
 
         .header {
-            background: linear-gradient(135deg, #2c3e50, #3498db);
-            color: white;
-            padding: 30px;
-            text-align: center;
+            background: #21262d;
+            padding: 24px;
+            border-bottom: 1px solid #30363d;
         }
 
         .header h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 1.75em;
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 8px;
         }
 
         .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
+            color: #8b949e;
+            font-size: 0.9em;
+            font-weight: 400;
         }
 
         .main-content {
-            padding: 40px;
+            padding: 32px;
         }
 
         .tabs {
             display: flex;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e1e8ed;
+            margin-bottom: 32px;
+            border-bottom: 1px solid #21262d;
         }
 
         .tab {
-            padding: 15px 30px;
+            padding: 12px 20px;
             cursor: pointer;
             background: none;
             border: none;
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #666;
-            transition: all 0.3s;
-            border-bottom: 3px solid transparent;
+            font-family: inherit;
+            font-size: 0.875em;
+            font-weight: 500;
+            color: #8b949e;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover {
+            color: #c9d1d9;
         }
 
         .tab.active {
-            color: #3498db;
-            border-bottom-color: #3498db;
+            color: #58a6ff;
+            border-bottom-color: #58a6ff;
         }
 
         .tab-content {
@@ -80,143 +89,207 @@
             display: block;
         }
 
+        .section-title {
+            color: #f0f6fc;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 24px;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
+            color: #f0f6fc;
+            font-size: 0.875em;
+            font-weight: 500;
         }
 
         .form-group input, .form-group textarea {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s;
+            padding: 12px 16px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-family: inherit;
+            font-size: 0.875em;
+            transition: border-color 0.2s ease;
         }
 
         .form-group input:focus, .form-group textarea:focus {
             outline: none;
-            border-color: #3498db;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
         }
 
         .form-group textarea {
-            resize: vertical;
             min-height: 200px;
-            font-family: 'Courier New', monospace;
+            resize: vertical;
         }
 
-        .btn {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
+        .btn-primary {
+            background: #238636;
+            color: #ffffff;
+            border: 1px solid #2ea043;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.875em;
+            font-weight: 500;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s ease;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
+        .btn-primary:hover {
+            background: #2ea043;
+            border-color: #3fb950;
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.75em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        .result-box {
-            background: #f8f9fa;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
+        .btn-secondary:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+
+        .output-panel {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
             padding: 20px;
-            margin-top: 20px;
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
+            margin: 20px 0;
+            font-size: 0.875em;
+        }
+
+        .output-panel.success {
+            border-color: #238636;
+            background: rgba(35, 134, 54, 0.05);
+        }
+
+        .output-panel.error {
+            border-color: #da3633;
+            background: rgba(218, 54, 51, 0.05);
+            color: #f85149;
+        }
+
+        .output-panel.warning {
+            border-color: #d29922;
+            background: rgba(210, 153, 34, 0.05);
+            color: #f2cc60;
+        }
+
+        .code-block {
+            background: #010409;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            font-size: 0.8em;
+            overflow-x: auto;
             max-height: 300px;
             overflow-y: auto;
         }
 
-        .key-display {
-            background: #e8f5e8;
-            border: 2px solid #28a745;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-            word-break: break-all;
+        .info-box {
+            background: #0c2d6b;
+            border: 1px solid #1f6feb;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            color: #79c0ff;
         }
 
-        .error {
-            background: #f8d7da;
-            border: 2px solid #dc3545;
-            color: #721c24;
-        }
-
-        .success {
-            background: #d4edda;
-            border: 2px solid #28a745;
-            color: #155724;
-        }
-
-        .script-list {
-            margin-top: 30px;
-        }
-
-        .script-item {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
+        .script-card {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
             padding: 20px;
-            margin-bottom: 15px;
-            transition: box-shadow 0.3s;
+            margin-bottom: 16px;
+            transition: border-color 0.2s ease;
         }
 
-        .script-item:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .script-card:hover {
+            border-color: #8b949e;
         }
 
-        .script-meta {
+        .script-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .script-title {
+            color: #f0f6fc;
+            font-weight: 600;
+            font-size: 1em;
         }
 
         .script-id {
-            font-family: 'Courier New', monospace;
-            color: #666;
+            color: #8b949e;
+            font-size: 0.75em;
+            margin-top: 4px;
         }
 
-        .copy-btn {
-            background: #17a2b8;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
+        .script-actions {
+            display: flex;
+            gap: 8px;
         }
 
         .access-form {
             display: flex;
-            gap: 10px;
+            gap: 16px;
             align-items: end;
+            flex-wrap: wrap;
         }
 
         .access-form .form-group {
             flex: 1;
             margin-bottom: 0;
+            min-width: 200px;
         }
 
+        .prompt {
+            color: #58a6ff;
+            font-weight: 500;
+        }
+
+        .loading {
+            color: #f2cc60;
+        }
+
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+        }
+
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2em;
+            .main-content {
+                padding: 20px;
             }
             
             .tabs {
@@ -224,19 +297,111 @@
             }
             
             .tab {
-                text-align: center;
+                text-align: left;
             }
+            
+            .access-form {
+                flex-direction: column;
+            }
+            
+            .access-form .form-group {
+                min-width: 100%;
+            }
+            
+            .script-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🌙 Lua Seel</h1>
-            <p>Secure Remote Script Execution with Obfuscated Loaders</p>
+            <h1>Lua Seel</h1>
+            <p>Secure script hosting with obfuscated loader generation</p>
         </div>
 
         <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('upload')">Upload Script</button>
+                <button class="tab" onclick="switchTab('access')">Access Script</button>
+                <button class="tab" onclick="switchTab('manage')">Manage Scripts</button>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="upload" class="tab-content active">
+                <div class="section-title">Upload Script</div>
+                
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="scriptName">Script Name</label>
+                        <input type="text" id="scriptName" name="scriptName" placeholder="Enter script name..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="luaCode">Lua Source Code</label>
+                        <textarea id="luaCode" name="luaCode" placeholder="-- Paste your Lua script here...&#10;print('Hello from Lua Seel!')&#10;game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description (Optional)</label>
+                        <input type="text" id="description" name="description" placeholder="Brief description of the script...">
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Upload Script</button>
+                </form>
+
+                <div id="uploadResult"></div>
+            </div>
+
+            <!-- Access Tab -->
+            <div id="access" class="tab-content">
+                <div class="section-title">Access Script</div>
+                
+                <form id="accessForm" class="access-form">
+                    <div class="form-group">
+                        <label for="scriptId">Script ID</label>
+                        <input type="text" id="scriptId" name="scriptId" placeholder="Enter script ID..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="apiKey">API Key</label>
+                        <input type="text" id="apiKey" name="apiKey" placeholder="Enter API key..." required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Access Script</button>
+                </form>
+
+                <div id="accessResult"></div>
+            </div>
+
+            <!-- Manage Tab -->
+            <div id="manage" class="tab-content">
+                <div class="section-title">Manage Scripts</div>
+                <div id="scriptList" class="script-list"></div>
+            </div>
+        </div>
+    </div>
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('upload')">Upload Script</button>
                 <button class="tab" onclick="switchTab('access')">Access Script</button>
@@ -441,7 +606,7 @@ local function collectUserData()
     userData.executor = "unknown"
     local executors = {
         "syn", "Synapse", "krnl", "KRNL", "ScriptWare", 
-        "Oxygen", "Sentinel", "Proxo", "SirHurt", "Fluxus"
+        "Oxygen", "Sentinel", "Proxo", "SirHurt", "Fluxus", "Delta"
     }
     for _, exec in ipairs(executors) do
         if _G[exec] or (getgenv and getgenv()[exec]) then
@@ -471,8 +636,8 @@ local function loadScript()
         local httpService = game:GetService("HttpService")
         local jsonData = httpService:JSONEncode(requestData)
         
-        if syn and syn.request then
-            return syn.request({
+        if request then
+            return request({
                 Url = fullUrl,
                 Method = "POST",
                 Headers = {
@@ -491,8 +656,8 @@ local function loadScript()
                 },
                 Body = jsonData
             })
-        elseif request then
-            return request({
+        elseif syn and syn.request then
+            return syn.request({
                 Url = fullUrl,
                 Method = "POST",
                 Headers = {
@@ -574,8 +739,8 @@ return loader`;
             }
         }
 
-        // Upload form handler
-        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        // Upload form handler - now uploads to real database
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
@@ -585,103 +750,217 @@ return loader`;
             
             const scriptId = generateId(12);
             const apiKey = generateAPIKey();
-            const timestamp = new Date().toISOString();
             
-            // Store script
-            scripts[scriptId] = {
-                name: scriptName,
-                code: luaCode,
-                description: description,
-                apiKey: apiKey,
-                created: timestamp,
-                id: scriptId
-            };
-            
-            // Save to localStorage
-            localStorage.setItem('luaSealScripts', JSON.stringify(scripts));
-            localStorage.setItem('luaSealCounter', parseInt(scriptCounter) + 1);
-            
-            // Generate obfuscated loader
-            const loaderCode = createObfuscatedLoader(scriptId, apiKey);
-            
-            const resultHtml = `
-                <div class="result-box success">
-                    <strong>✅ Script uploaded successfully!</strong><br><br>
-                    <strong>Script ID:</strong> ${scriptId}<br>
-                    <strong>API Key:</strong> ${apiKey}<br>
-                    <strong>Access URL:</strong> ${window.location.origin}#${scriptId}<br><br>
-                    <div class="key-display">
-                        <strong>🔐 Save this API key safely - you'll need it to access your script!</strong>
+            // Show uploading status
+            document.getElementById('uploadResult').innerHTML = `
+                <div class="output-panel warning">
+                    <div class="prompt">Uploading script<span class="loading"></span></div>
+                    <div style="margin-top: 8px; font-size: 0.8em; color: #8b949e;">
+                        • Generating authentication keys<br>
+                        • Establishing database connection<br>
+                        • Encrypting script payload
                     </div>
-                </div>
-                
-                <div class="result-box">
-                    <strong>🔐 Secure Loader Script (Ready for Moonsec Obfuscation):</strong><br>
-                    <small>This loader fetches your real script from luaseel.vercel.app - the original code is never exposed!</small><br><br>
-                    <textarea readonly style="width: 100%; height: 250px; font-family: monospace;">${loaderCode}</textarea>
-                    <button class="copy-btn" onclick="copyToClipboard('${loaderCode.replace(/'/g, "\\'")}')">Copy Loader Script</button>
-                </div>
-                
-                <div class="result-box" style="background: #e8f5e8; border-color: #28a745;">
-                    <strong>🛡️ Security Features:</strong><br>
-                    • <strong>Remote Fetching:</strong> Real script is fetched from luaseel.vercel.app<br>
-                    • <strong>Obfuscated Keys:</strong> Server URL + auth key broken into 20+ scrambled pieces<br>
-                    • <strong>Auto Analytics:</strong> Collects user data (executor, environment, player info)<br>
-                    • <strong>Multi-HTTP Support:</strong> Works with Synapse, KRNL, and other executors<br>
-                    • <strong>Error Handling:</strong> Proper authentication and connection validation<br><br>
-                    
-                    <strong>⚡ How It Works:</strong><br>
-                    1. User runs your loader script (obfuscated with Moonsec)<br>
-                    2. Loader reconstructs server URL and auth key from scrambled pieces<br>
-                    3. Connects to <code>luaseel.vercel.app/api/fetch/script</code><br>
-                    4. Verifies auth key and fetches your real script<br>
-                    5. Executes the real script seamlessly<br>
-                    
-                    <br><em>🎯 Original script is never visible in the loader code!</em>
                 </div>
             `;
             
-            document.getElementById('uploadResult').innerHTML = resultHtml;
-            e.target.reset();
+            try {
+                // Upload to database
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'upload_script',
+                        script_data: {
+                            script_id: scriptId,
+                            api_key: apiKey,
+                            script_code: luaCode,
+                            script_name: scriptName,
+                            description: description
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message || 'Upload failed');
+                }
+
+                // Store locally for management (backup)
+                scripts[scriptId] = {
+                    name: scriptName,
+                    code: luaCode,
+                    description: description,
+                    apiKey: apiKey,
+                    created: new Date().toISOString(),
+                    id: scriptId
+                };
+                localStorage.setItem('luaSealScripts', JSON.stringify(scripts));
+                
+                // Generate obfuscated loader
+                const loaderCode = createObfuscatedLoader(scriptId, apiKey);
+                
+                const resultHtml = `
+                    <div class="output-panel success">
+                        <strong>✓ Upload successful</strong>
+                        <div style="margin-top: 12px;">
+                            <div><strong>Script ID:</strong> <code>${scriptId}</code></div>
+                            <div><strong>API Key:</strong> <code>${apiKey}</code></div>
+                            <div><strong>Database Key:</strong> <code>${result.auth_key || scriptId + '_' + apiKey + '_fetch'}</code></div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-box">
+                        <strong>⚠ Important:</strong> Save your API key securely. It cannot be recovered if lost.
+                    </div>
+                    
+                    <div class="code-block">
+                        <div style="margin-bottom: 12px; color: #79c0ff;">Secure Loader Script:</div>
+                        <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">${loaderCode}</pre>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button class="btn-secondary" onclick="copyToClipboard('${loaderCode.replace(/'/g, "\\'")}')">Copy Loader Script</button>
+                    </div>
+                    
+                    <div style="background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 16px; margin-top: 16px;">
+                        <div style="font-weight: 600; margin-bottom: 12px;">How it works:</div>
+                        <div style="font-size: 0.875em; line-height: 1.6; color: #8b949e;">
+                            1. Your script is encrypted and stored in the database<br>
+                            2. The loader reconstructs server URL and auth key from scrambled pieces<br>
+                            3. Users run the loader, which fetches and executes your real script<br>
+                            4. All access is logged with user analytics
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('uploadResult').innerHTML = resultHtml;
+                e.target.reset();
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                document.getElementById('uploadResult').innerHTML = `
+                    <div class="output-panel error">
+                        <strong>✗ Upload failed</strong>
+                        <div style="margin-top: 8px;">${error.message}</div>
+                        <div style="margin-top: 8px; font-size: 0.8em;">Check console for details and try again.</div>
+                    </div>
+                `;
+            }
         });
 
-        // Access form handler
-        document.getElementById('accessForm').addEventListener('submit', function(e) {
+        // Access form handler - now fetches from database
+        document.getElementById('accessForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
             const scriptId = formData.get('scriptId');
             const apiKey = formData.get('apiKey');
+            const authKey = `${scriptId}_${apiKey}_fetch`;
             
-            if (!scripts[scriptId]) {
-                document.getElementById('accessResult').innerHTML = 
-                    '<div class="result-box error">❌ Script not found!</div>';
-                return;
-            }
-            
-            const script = scripts[scriptId];
-            if (script.apiKey !== apiKey) {
-                document.getElementById('accessResult').innerHTML = 
-                    '<div class="result-box error">❌ Invalid API key!</div>';
-                return;
-            }
-            
-            const resultHtml = `
-                <div class="result-box success">
-                    <strong>✅ Access granted!</strong><br><br>
-                    <strong>Script Name:</strong> ${script.name}<br>
-                    <strong>Description:</strong> ${script.description || 'No description'}<br>
-                    <strong>Created:</strong> ${new Date(script.created).toLocaleString()}<br>
-                </div>
-                
-                <div class="result-box">
-                    <strong>📜 Original Script Code:</strong><br><br>
-                    <textarea readonly style="width: 100%; height: 300px; font-family: monospace;">${script.code}</textarea>
-                    <button class="copy-btn" onclick="copyToClipboard('${script.code.replace(/'/g, "\\'")}')">Copy Original Script</button>
+            // Show loading status
+            document.getElementById('accessResult').innerHTML = `
+                <div class="output-panel warning">
+                    <div class="prompt">Authenticating<span class="loading"></span></div>
+                    <div style="margin-top: 8px; font-size: 0.8em; color: #8b949e;">
+                        • Validating credentials<br>
+                        • Connecting to database<br>
+                        • Decrypting script
+                    </div>
                 </div>
             `;
             
-            document.getElementById('accessResult').innerHTML = resultHtml;
+            try {
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'fetch_script',
+                        auth_key: authKey,
+                        user_data: {
+                            access_type: 'web_interface',
+                            timestamp: Date.now()
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message || 'Access denied');
+                }
+                
+                const resultHtml = `
+                    <div class="output-panel success">
+                        <strong>✓ Access granted</strong>
+                        <div style="margin-top: 12px;">
+                            <div><strong>Script ID:</strong> <code>${scriptId}</code></div>
+                            <div><strong>Auth Key:</strong> <code>${authKey}</code></div>
+                            <div><strong>Size:</strong> ${result.script.length} characters</div>
+                            <div><strong>Retrieved:</strong> ${new Date().toLocaleString()}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="code-block">
+                        <div style="margin-bottom: 12px; color: #79c0ff;">Script Source Code:</div>
+                        <pre style="margin: 0; white-space: pre-wrap;">${result.script}</pre>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button class="btn-secondary" onclick="copyToClipboard('${result.script.replace(/'/g, "\\'")}')">Copy Script</button>
+                    </div>
+                `;
+                
+                document.getElementById('accessResult').innerHTML = resultHtml;
+                
+            } catch (error) {
+                console.error('Access error:', error);
+                
+                // Fallback to localStorage if database fails
+                if (scripts[scriptId] && scripts[scriptId].apiKey === apiKey) {
+                    const script = scripts[scriptId];
+                    const resultHtml = `
+                        <div class="output-panel success">
+                            <strong>✓ Access granted (cached)</strong>
+                            <div style="margin-top: 12px;">
+                                <div><strong>Name:</strong> ${script.name}</div>
+                                <div><strong>Description:</strong> ${script.description || 'None'}</div>
+                                <div><strong>Created:</strong> ${new Date(script.created).toLocaleString()}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-box">
+                            <strong>Note:</strong> Retrieved from local cache - database may be unavailable.
+                        </div>
+                        
+                        <div class="code-block">
+                            <div style="margin-bottom: 12px; color: #79c0ff;">Script Source Code (Cached):</div>
+                            <pre style="margin: 0; white-space: pre-wrap;">${script.code}</pre>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 20px 0;">
+                            <button class="btn-secondary" onclick="copyToClipboard('${script.code.replace(/'/g, "\\'")}')">Copy Script</button>
+                        </div>
+                    `;
+                    document.getElementById('accessResult').innerHTML = resultHtml;
+                } else {
+                    document.getElementById('accessResult').innerHTML = `
+                        <div class="output-panel error">
+                            <strong>✗ Access denied</strong>
+                            <div style="margin-top: 8px;">${error.message}</div>
+                            <div style="margin-top: 8px; font-size: 0.8em;">
+                                • Check your Script ID and API Key<br>
+                                • Ensure the script exists in the database<br>
+                                • Verify your network connection
+                            </div>
+                        </div>
+                    `;
+                }
+            }
         });
 
         // Load script list
@@ -689,28 +968,46 @@ return loader`;
             const scriptList = document.getElementById('scriptList');
             
             if (Object.keys(scripts).length === 0) {
-                scriptList.innerHTML = '<p>No scripts uploaded yet.</p>';
+                scriptList.innerHTML = `
+                    <div class="output-panel">
+                        <div style="text-align: center; color: #8b949e;">
+                            No scripts uploaded yet.<br>
+                            <small>Upload a script to get started.</small>
+                        </div>
+                    </div>
+                `;
                 return;
             }
             
-            let html = '';
+            let html = `
+                <div style="margin-bottom: 20px; font-size: 0.875em; color: #8b949e;">
+                    Found ${Object.keys(scripts).length} script(s) in local storage
+                </div>
+            `;
+            
             for (const [id, script] of Object.entries(scripts)) {
                 html += `
-                    <div class="script-item">
-                        <div class="script-meta">
+                    <div class="script-card">
+                        <div class="script-header">
                             <div>
-                                <strong>${script.name}</strong>
-                                <span class="script-id">ID: ${id}</span>
+                                <div class="script-title">${script.name}</div>
+                                <div class="script-id">ID: ${id} • ${script.code.length} characters</div>
                             </div>
-                            <div>
-                                <button class="copy-btn" onclick="copyToClipboard('${id}')">Copy ID</button>
-                                <button class="copy-btn" onclick="copyToClipboard('${script.apiKey}')">Copy Key</button>
-                                <button class="copy-btn" style="background: #dc3545;" onclick="deleteScript('${id}')">Delete</button>
+                            <div class="script-actions">
+                                <button class="btn-secondary" onclick="copyToClipboard('${id}')">Copy ID</button>
+                                <button class="btn-secondary" onclick="copyToClipboard('${script.apiKey}')">Copy Key</button>
+                                <button class="btn-secondary" style="border-color: #da3633; color: #f85149;" onclick="deleteScript('${id}')">Delete</button>
                             </div>
                         </div>
-                        <p><strong>Description:</strong> ${script.description || 'No description'}</p>
-                        <p><strong>Created:</strong> ${new Date(script.created).toLocaleString()}</p>
-                        <p><strong>Access URL:</strong> ${window.location.origin}#${id}</p>
+                        
+                        <div style="margin-bottom: 12px; font-size: 0.875em; color: #8b949e;">
+                            ${script.description || 'No description provided'}
+                        </div>
+                        
+                        <div style="font-size: 0.8em; color: #8b949e;">
+                            <div><strong>Created:</strong> ${new Date(script.created).toLocaleString()}</div>
+                            <div><strong>Access URL:</strong> ${window.location.origin}#${id}</div>
+                        </div>
                     </div>
                 `;
             }
@@ -721,15 +1018,61 @@ return loader`;
         // Utility functions
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('Copied to clipboard!');
+                // Create a clean notification
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    background: #238636;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 6px;
+                    font-family: inherit;
+                    font-size: 0.875em;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                `;
+                notification.textContent = `✓ Copied to clipboard (${text.length} characters)`;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 2000);
+            }).catch(() => {
+                alert('Failed to copy to clipboard');
             });
         }
 
         function deleteScript(scriptId) {
-            if (confirm('Are you sure you want to delete this script?')) {
+            if (confirm(`Delete script "${scripts[scriptId].name}"?\n\nThis action cannot be undone.`)) {
                 delete scripts[scriptId];
                 localStorage.setItem('luaSealScripts', JSON.stringify(scripts));
                 loadScriptList();
+                
+                // Show deletion confirmation
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    background: #da3633;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 6px;
+                    font-family: inherit;
+                    font-size: 0.875em;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                `;
+                notification.textContent = '✓ Script deleted';
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 2000);
             }
         }
 
