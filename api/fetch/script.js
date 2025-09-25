@@ -10,12 +10,43 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // Handle GET requests (browser visits)
   if (req.method === 'GET') {
     return res.status(200).json({
       success: true,
-      message: 'Lua Seel API is online - Blob Storage Connected',
-      storage_path: '/scripts/'
+      message: 'Lua Seel API Online - Blob Storage Connected',
+      storage_path: '/scripts/',
+      node_version: process.version,
+      timestamp: new Date().toISOString()
     });
+  }
+
+  // Debug endpoint to check blob storage contents
+  if (req.method === 'GET' && req.url?.includes('debug')) {
+    try {
+      const { blobs } = await list({
+        prefix: 'scripts/',
+        limit: 20
+      });
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Debug: Blob storage contents',
+        found_scripts: blobs.map(blob => ({
+          pathname: blob.pathname,
+          filename: blob.pathname.replace('scripts/', ''),
+          url: blob.url,
+          size: blob.size,
+          uploaded: blob.uploadedAt
+        })),
+        total: blobs.length
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Debug failed: ' + error.message
+      });
+    }
   }
 
   try {
@@ -35,6 +66,12 @@ export default async function handler(req, res) {
       const auth_key = `${script_id}_${api_key}_fetch`;
       
       try {
+        console.log('📤 Upload attempt:', {
+          auth_key,
+          script_name,
+          code_length: script_code.length
+        });
+
         // Store script in /scripts/ folder in Blob storage
         const blob = await put(`scripts/${auth_key}.lua`, script_code, {
           access: 'public'
@@ -47,34 +84,45 @@ export default async function handler(req, res) {
           created: new Date().toISOString(),
           script_id,
           api_key,
-          size: script_code.length
+          size: script_code.length,
+          auth_key
         };
         
         await put(`meta/${auth_key}.json`, JSON.stringify(metadata), {
           access: 'public'
         });
 
-        console.log('✓ Script uploaded to /scripts/:', auth_key, script_code.length + ' chars');
+        console.log('✅ Script uploaded successfully:', {
+          auth_key,
+          blob_url: blob.url,
+          storage_path: `scripts/${auth_key}.lua`
+        });
 
         return res.status(200).json({
           success: true,
-          message: 'Script uploaded successfully to /scripts/',
+          message: 'Script uploaded successfully to blob storage',
           script_id,
           api_key,
           auth_key,
           blob_url: blob.url,
           storage_path: `scripts/${auth_key}.lua`
         });
+
       } catch (error) {
-        console.error('Blob storage error:', error);
+        console.error('❌ Blob storage upload error:', error);
         return res.status(500).json({
           success: false,
-          message: 'Failed to store script: ' + error.message
+          message: 'Failed to store script in blob storage',
+          error: error.message,
+          debug: {
+            auth_key,
+            script_length: script_code?.length || 0
+          }
         });
       }
     }
 
-    // Fetch Script from /scripts/ folder
+    // Fetch Script from /scripts/ folder - DEBUG VERSION
     if (action === 'fetch_script') {
       if (!auth_key) {
         return res.status(400).json({
@@ -84,87 +132,100 @@ export default async function handler(req, res) {
       }
 
       try {
-        // Fetch from /scripts/ folder using multiple URL patterns
-        const scriptPath = `scripts/${auth_key}.lua`;
-        const possibleUrls = [
-          `https://blob.vercel-storage.com/${scriptPath}`,
-          `${process.env.VERCEL_BLOB_STORE_URL || 'https://blob.vercel-storage.com'}/${scriptPath}`
-        ];
-
-        console.log('🔍 Fetching script from /scripts/:', auth_key);
-
-        for (const url of possibleUrls) {
-          try {
-            console.log('🌐 Trying URL:', url);
-            const response = await fetch(url);
-            
-            if (response.ok) {
-              const script = await response.text();
-              console.log('✅ Script found in /scripts/!', script.length + ' chars');
-
-              // Log user analytics
-              console.log('📊 Script accessed:', {
-                auth_key,
-                user_data: JSON.stringify(user_data || {}),
-                script_size: script.length
-              });
-
-              return res.status(200).json({
-                success: true,
-                script: script,
-                timestamp: Date.now(),
-                source_path: scriptPath
-              });
-            } else {
-              console.log('❌ URL failed:', response.status, response.statusText);
-            }
-          } catch (fetchError) {
-            console.log('❌ Fetch error:', fetchError.message);
-          }
-        }
-
-        // If direct URLs failed, try using Blob list API as fallback
-        try {
-          console.log('🔄 Fallback: Using Blob list API...');
-          const { blobs } = await list({
-            prefix: `scripts/${auth_key}`
+        console.log('🔍 DEBUG: Fetch request for auth_key:', auth_key);
+        
+        // List all scripts in storage to see what actually exists
+        const { blobs } = await list({
+          prefix: 'scripts/',
+          limit: 50
+        });
+        
+        console.log('📁 DEBUG: Scripts in storage:', blobs.map(b => ({
+          pathname: b.pathname,
+          filename: b.pathname.replace('scripts/', '')
+        })));
+        
+        const expectedPath = `scripts/${auth_key}.lua`;
+        console.log('🎯 DEBUG: Looking for:', expectedPath);
+        
+        // Check if our expected file exists
+        const matchingBlob = blobs.find(b => b.pathname === expectedPath);
+        
+        if (matchingBlob) {
+          console.log('✅ DEBUG: Found exact match!', {
+            pathname: matchingBlob.pathname,
+            url: matchingBlob.url
           });
           
-          if (blobs.length > 0) {
-            const blob = blobs[0];
-            const response = await fetch(blob.url);
-            
+          try {
+            const response = await fetch(matchingBlob.url);
             if (response.ok) {
               const script = await response.text();
-              console.log('✅ Script found via Blob API!', script.length + ' chars');
+              
+              console.log('✅ DEBUG: Script retrieved successfully:', {
+                auth_key,
+                script_length: script.length,
+                user_data: user_data ? 'present' : 'missing'
+              });
+
+              // Log user analytics
+              if (user_data) {
+                console.log('📊 User analytics:', {
+                  auth_key,
+                  env: user_data.env,
+                  executor: user_data.executor,
+                  player_name: user_data.player?.name,
+                  timestamp: new Date().toISOString()
+                });
+              }
               
               return res.status(200).json({
                 success: true,
                 script: script,
                 timestamp: Date.now(),
-                source_method: 'blob_api'
+                debug: {
+                  requested: auth_key,
+                  found_path: matchingBlob.pathname,
+                  script_length: script.length
+                }
               });
+            } else {
+              console.error('❌ DEBUG: Failed to fetch blob content:', response.status, response.statusText);
             }
+          } catch (fetchError) {
+            console.error('❌ DEBUG: Error fetching blob content:', fetchError);
           }
-        } catch (listError) {
-          console.error('Blob list API error:', listError);
         }
-
+        
+        // If no exact match found, return detailed debug info
+        console.log('❌ DEBUG: No exact match found');
+        
         return res.status(401).json({
           success: false,
-          message: 'Script not found in /scripts/ folder',
+          message: 'Script not found in blob storage',
           debug: {
-            auth_key,
-            searched_path: scriptPath,
-            attempted_urls: possibleUrls
+            requested_auth_key: auth_key,
+            expected_path: expectedPath,
+            available_scripts: blobs.map(b => ({
+              path: b.pathname,
+              filename: b.pathname.replace('scripts/', ''),
+              size: b.size
+            })),
+            total_scripts_found: blobs.length,
+            search_prefix: 'scripts/'
           }
         });
 
       } catch (error) {
-        console.error('Script fetch error:', error);
-        return res.status(401).json({
+        console.error('❌ DEBUG: Overall fetch error:', error);
+        return res.status(500).json({
           success: false,
-          message: 'Script retrieval failed: ' + error.message
+          message: 'Script retrieval failed: ' + error.message,
+          debug: {
+            auth_key,
+            error_type: error.name,
+            error_message: error.message
+          }
         });
       }
     }
@@ -180,11 +241,24 @@ export default async function handler(req, res) {
         const scripts = [];
         for (const blob of blobs) {
           const filename = blob.pathname.replace('scripts/', '').replace('.lua', '');
+          
+          // Try to get metadata
+          let metadata = null;
+          try {
+            const metaResponse = await fetch(`https://blob.vercel-storage.com/meta/${filename}.json`);
+            if (metaResponse.ok) {
+              metadata = await metaResponse.json();
+            }
+          } catch (metaError) {
+            // Metadata not found, continue without it
+          }
+          
           scripts.push({
             auth_key: filename,
             url: blob.url,
             size: blob.size,
-            uploaded: blob.uploadedAt
+            uploaded: blob.uploadedAt,
+            metadata: metadata
           });
         }
 
@@ -194,6 +268,7 @@ export default async function handler(req, res) {
           total: scripts.length
         });
       } catch (error) {
+        console.error('❌ List scripts error:', error);
         return res.status(500).json({
           success: false,
           message: 'Failed to list scripts: ' + error.message
@@ -210,7 +285,8 @@ export default async function handler(req, res) {
     console.error('❌ API Error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Server error: ' + error.message
+      message: 'Server error: ' + error.message,
+      error_type: error.name
     });
   }
 }
