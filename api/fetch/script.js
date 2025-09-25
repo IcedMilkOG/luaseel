@@ -1,68 +1,91 @@
-import { put, head, list } from '@vercel/blob';
+import { put, list } from '@vercel/blob';
 
 export default async function handler(req, res) {
-  // Enable CORS for website
+  // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
+  // Handle GET requests (browser visits)
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      success: true,
+      message: 'Lua Seel API is online',
+      endpoints: {
+        upload: 'POST /api/fetch/script with action: upload_script',
+        fetch: 'POST /api/fetch/script with action: fetch_script'
+      }
+    });
+  }
+
   try {
+    // Handle missing or invalid body
+    if (!req.body) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request body required'
+      });
+    }
+
     const { auth_key, user_data, action, script_data } = req.body;
 
-    // Upload Script Endpoint
+    // Upload Script
     if (action === 'upload_script') {
-      const { script_id, api_key, script_code, script_name, description } = script_data;
+      const { script_id, api_key, script_code, script_name, description } = script_data || {};
       
       if (!script_id || !api_key || !script_code) {
         return res.status(400).json({
           success: false,
-          message: 'Missing required fields'
+          message: 'Missing required fields: script_id, api_key, script_code'
         });
       }
 
-      // Store script in Blob storage
       const auth_key = `${script_id}_${api_key}_fetch`;
-      const blob = await put(`scripts/${auth_key}.lua`, script_code, {
-        access: 'public'
-      });
       
-      // Store metadata
-      const metadata = {
-        name: script_name || 'Untitled Script',
-        description: description || '',
-        created: new Date().toISOString(),
-        script_id,
-        api_key,
-        size: script_code.length
-      };
-      
-      await put(`meta/${auth_key}.json`, JSON.stringify(metadata), {
-        access: 'public'
-      });
+      try {
+        // Store script in Blob storage
+        const blob = await put(`scripts/${auth_key}.lua`, script_code, {
+          access: 'public'
+        });
+        
+        // Store metadata
+        const metadata = {
+          name: script_name || 'Untitled Script',
+          description: description || '',
+          created: new Date().toISOString(),
+          script_id,
+          api_key,
+          size: script_code.length
+        };
+        
+        await put(`meta/${auth_key}.json`, JSON.stringify(metadata), {
+          access: 'public'
+        });
 
-      // Log upload
-      console.log('📤 Script uploaded to Blob:', {
-        auth_key,
-        name: script_name,
-        size: script_code.length + ' characters',
-        url: blob.url
-      });
+        console.log('✓ Script uploaded:', auth_key, script_code.length + ' chars');
 
-      return res.status(200).json({
-        success: true,
-        message: 'Script uploaded successfully',
-        script_id,
-        api_key,
-        auth_key,
-        blob_url: blob.url
-      });
+        return res.status(200).json({
+          success: true,
+          message: 'Script uploaded successfully',
+          script_id,
+          api_key,
+          auth_key,
+          blob_url: blob.url
+        });
+      } catch (error) {
+        console.error('Blob storage error:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to store script: ' + error.message
+        });
+      }
     }
 
-    // Fetch Script Endpoint
+    // Fetch Script
     if (action === 'fetch_script') {
       if (!auth_key) {
         return res.status(400).json({
@@ -72,36 +95,25 @@ export default async function handler(req, res) {
       }
 
       try {
-        // Fetch script from Blob storage
-        const response = await fetch(`${process.env.BLOB_READ_WRITE_TOKEN ? 'https://' + process.env.VERCEL_URL : 'https://blob.vercel-storage.com'}/scripts/${auth_key}.lua`);
+        // Get script from Blob storage using Vercel's blob URL pattern
+        const scriptUrl = `https://blob.vercel-storage.com/scripts/${auth_key}.lua`;
+        const response = await fetch(scriptUrl);
         
         if (!response.ok) {
+          console.error('Script fetch failed:', response.status, response.statusText);
           return res.status(401).json({
             success: false,
-            message: 'Invalid authentication key'
+            message: 'Invalid authentication key or script not found'
           });
         }
 
         const script = await response.text();
 
-        // Log user analytics
-        console.log('📊 Script accessed:', {
+        // Log analytics
+        console.log('✓ Script accessed:', {
           auth_key,
-          user_data: JSON.stringify(user_data),
-          timestamp: new Date().toISOString(),
+          user_data: JSON.stringify(user_data || {}),
           script_size: script.length
-        });
-
-        // Store analytics
-        const analytics = {
-          user_data,
-          timestamp: new Date().toISOString(),
-          script_id: auth_key.split('_')[0],
-          script_size: script.length
-        };
-        
-        await put(`analytics/${auth_key}_${Date.now()}.json`, JSON.stringify(analytics), {
-          access: 'public'
         });
 
         return res.status(200).json({
@@ -111,6 +123,7 @@ export default async function handler(req, res) {
         });
 
       } catch (error) {
+        console.error('Script fetch error:', error);
         return res.status(401).json({
           success: false,
           message: 'Script not found or access denied'
@@ -118,56 +131,16 @@ export default async function handler(req, res) {
       }
     }
 
-    // List Scripts Endpoint (for management)
-    if (action === 'list_scripts') {
-      try {
-        const { blobs } = await list({
-          prefix: 'scripts/',
-          limit: 100
-        });
-        
-        const scripts = [];
-        
-        for (const blob of blobs) {
-          try {
-            const filename = blob.pathname.replace('scripts/', '').replace('.lua', '');
-            const metaResponse = await fetch(`${blob.url.replace('/scripts/', '/meta/').replace('.lua', '.json')}`);
-            
-            if (metaResponse.ok) {
-              const meta = await metaResponse.json();
-              scripts.push({
-                auth_key: filename,
-                url: blob.url,
-                ...meta
-              });
-            }
-          } catch (e) {
-            // Skip if metadata not found
-          }
-        }
-
-        return res.status(200).json({
-          success: true,
-          scripts: scripts
-        });
-      } catch (error) {
-        return res.status(200).json({
-          success: true,
-          scripts: []
-        });
-      }
-    }
-
     return res.status(400).json({
       success: false,
-      message: 'Invalid action'
+      message: 'Invalid action. Use: upload_script or fetch_script'
     });
 
   } catch (error) {
-    console.error('❌ Blob storage error:', error);
+    console.error('API Error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Storage error: ' + error.message
+      message: 'Server error: ' + error.message
     });
   }
 }
