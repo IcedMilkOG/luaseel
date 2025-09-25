@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
+    "@vercel/blob": "^0.23.0",
     "@vercel/node": "^3.0.0"
   },
   "engines": {
