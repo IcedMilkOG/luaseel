@@ -481,25 +481,26 @@
             return generateId(32);
         }
 
-        // Create working obfuscated loader script
+        // Create WORKING obfuscated loader script - Fixed key reconstruction
         function createObfuscatedLoader(scriptId, apiKey) {
-            const baseKey = scriptId + '_' + apiKey + '_fetch';
+            const authKey = `${scriptId}_${apiKey}_fetch`;
             
-            // Simple but effective obfuscation - split key into chunks
+            // Simple but reliable obfuscation - split auth key into pieces
             const keyParts = [];
-            let remaining = baseKey;
-            while (remaining.length > 0) {
-                const chunkSize = Math.floor(Math.random() * 4) + 3;
-                const chunk = remaining.substring(0, chunkSize);
-                remaining = remaining.substring(chunkSize);
-                keyParts.push(chunk);
+            const chunkSize = 3;
+            
+            for (let i = 0; i < authKey.length; i += chunkSize) {
+                keyParts.push(authKey.substring(i, i + chunkSize));
             }
             
-            // Add some dummy data
-            const allParts = [...keyParts];
-            for (let i = 0; i < 8; i++) {
-                allParts.push(generateId(Math.floor(Math.random() * 5) + 3));
+            // Add dummy parts
+            const dummyParts = [];
+            for (let i = 0; i < 10; i++) {
+                dummyParts.push(generateId(3));
             }
+            
+            // Combine real and dummy parts
+            const allParts = [...keyParts, ...dummyParts];
             
             // Shuffle all parts
             for (let i = allParts.length - 1; i > 0; i--) {
@@ -507,20 +508,18 @@
                 [allParts[i], allParts[j]] = [allParts[j], allParts[i]];
             }
             
-            // Find indices of real key parts
-            const keyIndices = keyParts.map(part => allParts.indexOf(part));
+            // Find indices of real parts (in order)
+            const realIndices = keyParts.map(part => allParts.indexOf(part));
             
             let obfuscatedLoader = `local loader = {}
 local parts = {}
 ${allParts.map((part, index) => `parts[${index + 1}] = "${part}"`).join('\n')}
 
-local function getKey()
-    local indices = {${keyIndices.join(', ')}}
+local function getAuthKey()
+    local indices = {${realIndices.join(', ')}}
     local key = ""
     for _, idx in ipairs(indices) do
-        if parts[idx] then
-            key = key .. parts[idx]
-        end
+        key = key .. parts[idx]
     end
     return key
 end
@@ -546,7 +545,7 @@ local function getUserData()
     end
     
     data.executor = "unknown"
-    local executors = {"syn", "Synapse", "krnl", "KRNL", "ScriptWare", "Delta", "Fluxus"}
+    local executors = {"syn", "Synapse", "krnl", "KRNL", "ScriptWare", "Delta", "Fluxus", "Oxygen"}
     for _, exec in ipairs(executors) do
         if _G[exec] or (getgenv and getgenv()[exec]) then
             data.executor = exec:lower()
@@ -558,9 +557,12 @@ local function getUserData()
 end
 
 local function loadScript()
-    local authKey = getKey()
+    local authKey = getAuthKey()
     local serverUrl = "https://luaseel.vercel.app/api/fetch/script"
     local userData = getUserData()
+    
+    print("DEBUG: Reconstructed auth key:", authKey)
+    print("DEBUG: Expected format: " .. "${scriptId}_${apiKey}_fetch")
     
     local requestData = {
         auth_key = authKey,
@@ -605,12 +607,15 @@ local function loadScript()
     end)
     
     if not success or not response then
-        error("Failed to connect: " .. tostring(response))
+        error("Connection failed: " .. tostring(response))
         return
     end
     
+    print("DEBUG: Server response status:", response.StatusCode)
+    print("DEBUG: Server response body:", response.Body:sub(1, 200) .. "...")
+    
     if response.StatusCode ~= 200 then
-        error("Server error: " .. response.StatusCode .. " - " .. (response.Body or "Unknown error"))
+        error("Server error " .. response.StatusCode .. ": " .. (response.Body or "Unknown error"))
         return
     end
     
@@ -636,6 +641,7 @@ local function loadScript()
             return
         end
         
+        print("SUCCESS: Script loaded and executing...")
         spawn(function()
             local execSuccess, execError = pcall(scriptFunc)
             if not execSuccess then
