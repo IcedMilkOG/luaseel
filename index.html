@@ -330,16 +330,6 @@
             </form>
             
             <div id="loginMessage"></div>
-            
-            <!-- Debug Section (remove after testing) -->
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                <button type="button" id="debugBtn" class="secondary-btn" style="width: 100%; margin-bottom: 0.5rem;">
-                    Debug Admin Status
-                </button>
-                <button type="button" id="resetAdminBtn" class="secondary-btn" style="width: 100%;">
-                    Reset Admin (if needed)
-                </button>
-            </div>
         </div>
 
         <div id="adminSection" style="display: none;" class="admin-section">
@@ -630,6 +620,74 @@
             localStorage.removeItem('luaseel_authenticated');
             location.reload();
         }
+
+        // Debug admin status
+        document.getElementById('debugBtn').addEventListener('click', async function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Checking...';
+            
+            try {
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'debug_admin'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const debug = result.debug;
+                    let message = `
+                        <div style="font-family: monospace; font-size: 0.8rem; text-align: left; background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                            <strong>Debug Info:</strong><br>
+                            User Exists: ${debug.user_exists}<br>
+                            Credentials Exist: ${debug.credentials_exist}<br>
+                            ${debug.user_data ? `User: ${debug.user_data.username} (${debug.user_data.role})<br>Created: ${debug.user_data.created}<br>Has Password: ${debug.user_data.has_password}` : 'No user data'}<br>
+                            ${debug.credential_data ? `Credentials: ${debug.credential_data.username}<br>Has Password: ${debug.credential_data.has_password}` : 'No credential data'}
+                        </div>
+                    `;
+                    showMessage('loginMessage', message, false);
+                } else {
+                    showMessage('loginMessage', 'Debug failed: ' + result.message, true);
+                }
+            } catch (error) {
+                showMessage('loginMessage', 'Debug request failed', true);
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Debug Admin Status';
+        });
+
+        // Reset admin
+        document.getElementById('resetAdminBtn').addEventListener('click', async function() {
+            if (!confirm('Reset admin user? This will recreate the admin account.')) return;
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Resetting...';
+            
+            try {
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'reset_admin'
+                    })
+                });
+                
+                const result = await response.json();
+                showMessage('loginMessage', result.message, !result.success);
+                
+            } catch (error) {
+                showMessage('loginMessage', 'Reset request failed', true);
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Reset Admin (if needed)';
+        });
 
         // Initialize
         createParticles();
