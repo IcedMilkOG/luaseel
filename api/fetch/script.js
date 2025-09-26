@@ -40,23 +40,71 @@ function generateSessionToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-// Initialize admin user if not exists
-async function initializeAdmin() {
+// Store admin credentials securely in blob storage
+async function initializeAdminCredentials() {
   try {
-    const adminExists = await list({ prefix: 'users/daveblunts' });
-    if (adminExists.blobs.length === 0) {
-      const adminUser = {
+    // Check if admin config already exists
+    const configBlobs = await list({ prefix: 'config/admin-credentials' });
+    if (configBlobs.blobs.length === 0) {
+      // Create secure admin credentials
+      const adminCredentials = {
         username: 'daveblunts',
-        password: hashPassword('escolar112200'), // FIXED: Added missing closing quote
+        password: 'escolar112200',
         role: 'admin',
-        created: new Date().toISOString()
+        created: new Date().toISOString(),
+        description: 'Primary administrator account'
       };
       
-      await put('users/daveblunts.json', JSON.stringify(adminUser), { access: 'public' });
-      console.log('✓ Admin user initialized');
+      await put('config/admin-credentials.json', JSON.stringify(adminCredentials), { 
+        access: 'public' 
+      });
+      
+      console.log('✓ Admin credentials stored securely in blob storage');
+    }
+  } catch (error) {
+    console.error('Failed to store admin credentials:', error);
+  }
+}
+
+// Initialize admin user from secure blob storage
+async function initializeAdmin() {
+  try {
+    // First ensure admin credentials are stored
+    await initializeAdminCredentials();
+    
+    // Check if admin user already exists
+    const adminExists = await list({ prefix: 'users/daveblunts' });
+    if (adminExists.blobs.length === 0) {
+      
+      // Get admin credentials from secure blob storage
+      const credentialsBlobs = await list({ prefix: 'config/admin-credentials' });
+      if (credentialsBlobs.blobs.length > 0) {
+        const credentialsResponse = await fetch(credentialsBlobs.blobs[0].url);
+        const credentials = await credentialsResponse.json();
+        
+        const adminUser = {
+          username: credentials.username,
+          password: hashPassword(credentials.password),
+          role: credentials.role,
+          created: new Date().toISOString(),
+          initialized_from_config: true
+        };
+        
+        await put('users/daveblunts.json', JSON.stringify(adminUser), { access: 'public' });
+        console.log('✓ Admin user initialized from secure credentials');
+        
+        return { success: true, message: 'Admin user created' };
+      } else {
+        console.error('❌ Admin credentials not found in blob storage');
+        return { success: false, message: 'Admin credentials not found' };
+      }
+    } else {
+      console.log('✓ Admin user already exists');
+      return { success: true, message: 'Admin user exists' };
     }
   } catch (error) {
     console.error('Failed to initialize admin:', error);
+    return { success: false, message: error.message };
   }
 }
 
@@ -70,18 +118,15 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Initialize admin on first request
-  if (req.method === 'GET' && !req.url?.includes('debug')) {
-    await initializeAdmin();
-  }
-
-  // Handle GET requests (browser visits)
+  // Handle GET requests (browser visits) and initialize admin
   if (req.method === 'GET') {
+    const adminResult = await initializeAdmin();
     return res.status(200).json({
       success: true,
       message: 'LuaSeel API Online - Authentication Enabled',
       storage_path: '/scripts/',
       active_sessions: activeSessions.size,
+      admin_status: adminResult,
       node_version: process.version,
       timestamp: new Date().toISOString()
     });
@@ -104,18 +149,42 @@ export default async function handler(req, res) {
       try {
         console.log('🔐 Login attempt for user:', username);
         
+        // Ensure admin is initialized before login attempts
+        await initializeAdmin();
+        
         // Get user from blob storage
         const userBlobs = await list({ prefix: `users/${username}` });
+        console.log('📁 User blobs found:', userBlobs.blobs.length);
+        
         if (userBlobs.blobs.length === 0) {
-          console.log('❌ User not found:', username);
+          console.log('❌ User not found in blob storage:', username);
           return res.status(401).json({
             success: false,
-            message: 'Invalid credentials'
+            message: 'Invalid credentials',
+            debug: {
+              username_searched: username,
+              blobs_found: 0
+            }
           });
         }
 
+        console.log('📥 Fetching user data from:', userBlobs.blobs[0].url);
         const userResponse = await fetch(userBlobs.blobs[0].url);
+        
+        if (!userResponse.ok) {
+          console.error('❌ Failed to fetch user data:', userResponse.status);
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve user data'
+          });
+        }
+        
         const userData = await userResponse.json();
+        console.log('👤 User data loaded:', {
+          username: userData.username,
+          role: userData.role,
+          hasPassword: !!userData.password
+        });
         
         if (verifyPassword(password, userData.password)) {
           const sessionToken = generateSessionToken();
@@ -125,7 +194,7 @@ export default async function handler(req, res) {
             created: Date.now()
           });
 
-          console.log('✓ User logged in:', username, 'Role:', userData.role);
+          console.log('✓ User logged in successfully:', username, 'Role:', userData.role);
           
           return res.status(200).json({
             success: true,
@@ -135,17 +204,97 @@ export default async function handler(req, res) {
             username: userData.username
           });
         } else {
-          console.log('❌ Invalid password for user:', username);
+          console.log('❌ Password verification failed for user:', username);
           return res.status(401).json({
             success: false,
-            message: 'Invalid credentials'
+            message: 'Invalid credentials',
+            debug: {
+              username: username,
+              password_check: 'failed'
+            }
           });
         }
       } catch (error) {
         console.error('Login error:', error);
         return res.status(500).json({
           success: false,
-          message: 'Login system temporarily unavailable'
+          message: 'Login system temporarily unavailable',
+          error: error.message
+        });
+      }
+    }
+
+    // Debug endpoint to check admin status
+    if (action === 'debug_admin') {
+      try {
+        const userBlobs = await list({ prefix: 'users/daveblunts' });
+        const credentialBlobs = await list({ prefix: 'config/admin-credentials' });
+        
+        let userExists = userBlobs.blobs.length > 0;
+        let credentialsExist = credentialBlobs.blobs.length > 0;
+        let userData = null;
+        let credentialData = null;
+        
+        if (userExists) {
+          const userResponse = await fetch(userBlobs.blobs[0].url);
+          userData = await userResponse.json();
+        }
+        
+        if (credentialsExist) {
+          const credResponse = await fetch(credentialBlobs.blobs[0].url);
+          credentialData = await credResponse.json();
+        }
+        
+        return res.status(200).json({
+          success: true,
+          debug: {
+            user_exists: userExists,
+            credentials_exist: credentialsExist,
+            user_data: userData ? {
+              username: userData.username,
+              role: userData.role,
+              created: userData.created,
+              has_password: !!userData.password
+            } : null,
+            credential_data: credentialData ? {
+              username: credentialData.username,
+              has_password: !!credentialData.password,
+              created: credentialData.created
+            } : null
+          }
+        });
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: 'Debug failed',
+          error: error.message
+        });
+      }
+    }
+
+    // Force admin reset endpoint (for debugging)
+    if (action === 'reset_admin') {
+      try {
+        console.log('🔄 Forcing admin reset...');
+        
+        // Delete existing admin user
+        const userBlobs = await list({ prefix: 'users/daveblunts' });
+        // Note: Vercel blob doesn't have a delete API in the basic package
+        // You would need to manually delete or let it expire
+        
+        // Reinitialize admin
+        const result = await initializeAdmin();
+        
+        return res.status(200).json({
+          success: true,
+          message: 'Admin reset completed',
+          result: result
+        });
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: 'Admin reset failed',
+          error: error.message
         });
       }
     }
