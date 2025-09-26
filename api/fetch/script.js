@@ -4,6 +4,18 @@ import crypto from 'crypto';
 // Simple in-memory session store (in production, use a proper session store)
 const activeSessions = new Map();
 
+// Clean up expired sessions every hour
+setInterval(() => {
+  const now = Date.now();
+  const expireTime = 24 * 60 * 60 * 1000; // 24 hours
+  
+  for (const [token, session] of activeSessions.entries()) {
+    if (now - session.created > expireTime) {
+      activeSessions.delete(token);
+    }
+  }
+}, 60 * 60 * 1000);
+
 // Hash password securely
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -13,9 +25,14 @@ function hashPassword(password) {
 
 // Verify password
 function verifyPassword(password, hashedPassword) {
-  const [salt, hash] = hashedPassword.split(':');
-  const verifyHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha256').toString('hex');
-  return hash === verifyHash;
+  try {
+    const [salt, hash] = hashedPassword.split(':');
+    const verifyHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha256').toString('hex');
+    return hash === verifyHash;
+  } catch (error) {
+    console.error('Password verification error:', error);
+    return false;
+  }
 }
 
 // Generate session token
@@ -30,7 +47,7 @@ async function initializeAdmin() {
     if (adminExists.blobs.length === 0) {
       const adminUser = {
         username: 'daveblunts',
-        password: hashPassword('escolar112200),
+        password: hashPassword('escolar112200'), // FIXED: Added missing closing quote
         role: 'admin',
         created: new Date().toISOString()
       };
@@ -64,6 +81,7 @@ export default async function handler(req, res) {
       success: true,
       message: 'LuaSeel API Online - Authentication Enabled',
       storage_path: '/scripts/',
+      active_sessions: activeSessions.size,
       node_version: process.version,
       timestamp: new Date().toISOString()
     });
@@ -84,9 +102,12 @@ export default async function handler(req, res) {
       }
 
       try {
+        console.log('🔐 Login attempt for user:', username);
+        
         // Get user from blob storage
         const userBlobs = await list({ prefix: `users/${username}` });
         if (userBlobs.blobs.length === 0) {
+          console.log('❌ User not found:', username);
           return res.status(401).json({
             success: false,
             message: 'Invalid credentials'
@@ -104,7 +125,7 @@ export default async function handler(req, res) {
             created: Date.now()
           });
 
-          console.log('✓ User logged in:', username);
+          console.log('✓ User logged in:', username, 'Role:', userData.role);
           
           return res.status(200).json({
             success: true,
@@ -114,6 +135,7 @@ export default async function handler(req, res) {
             username: userData.username
           });
         } else {
+          console.log('❌ Invalid password for user:', username);
           return res.status(401).json({
             success: false,
             message: 'Invalid credentials'
@@ -123,7 +145,7 @@ export default async function handler(req, res) {
         console.error('Login error:', error);
         return res.status(500).json({
           success: false,
-          message: 'Login failed'
+          message: 'Login system temporarily unavailable'
         });
       }
     }
@@ -144,6 +166,21 @@ export default async function handler(req, res) {
         return res.status(400).json({
           success: false,
           message: 'Username and password required'
+        });
+      }
+
+      // Basic validation
+      if (new_username.length < 3) {
+        return res.status(400).json({
+          success: false,
+          message: 'Username must be at least 3 characters'
+        });
+      }
+
+      if (new_password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 6 characters'
         });
       }
 
@@ -189,6 +226,17 @@ export default async function handler(req, res) {
       const session = activeSessions.get(session_token);
       
       if (session) {
+        // Check if session is expired (24 hours)
+        const expireTime = 24 * 60 * 60 * 1000;
+        if (Date.now() - session.created > expireTime) {
+          activeSessions.delete(session_token);
+          return res.status(200).json({
+            success: true,
+            valid: false,
+            message: 'Session expired'
+          });
+        }
+        
         return res.status(200).json({
           success: true,
           valid: true,
@@ -198,37 +246,53 @@ export default async function handler(req, res) {
       } else {
         return res.status(200).json({
           success: true,
-          valid: false
+          valid: false,
+          message: 'Invalid session'
         });
       }
     }
 
     if (action === 'logout') {
       const { session_token } = req.body;
-      activeSessions.delete(session_token);
+      const deleted = activeSessions.delete(session_token);
       
       return res.status(200).json({
         success: true,
-        message: 'Logged out successfully'
+        message: deleted ? 'Logged out successfully' : 'Session not found'
       });
     }
 
-    // Protected endpoints - require authentication
-    const { session_token } = req.body;
-    const session = activeSessions.get(session_token);
-    
-    if (!session) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required'
-      });
+    // Protected endpoints - require authentication for certain actions
+    if (['upload_script', 'list_scripts'].includes(action)) {
+      const { session_token } = req.body;
+      const session = activeSessions.get(session_token);
+      
+      if (!session) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required'
+        });
+      }
+
+      // Check session expiry
+      const expireTime = 24 * 60 * 60 * 1000;
+      if (Date.now() - session.created > expireTime) {
+        activeSessions.delete(session_token);
+        return res.status(401).json({
+          success: false,
+          message: 'Session expired, please log in again'
+        });
+      }
     }
 
-    // Rest of your existing endpoints (upload_script, fetch_script, etc.)
+    // Script management endpoints
     const { auth_key, user_data, script_data } = req.body;
 
     // Upload Script to /scripts/ folder
     if (action === 'upload_script') {
+      const { session_token } = req.body;
+      const session = activeSessions.get(session_token);
+      
       const { script_id, api_key, script_code, script_name, description } = script_data || {};
       
       if (!script_id || !api_key || !script_code) {
@@ -308,7 +372,7 @@ export default async function handler(req, res) {
       }
 
       try {
-        console.log('🔍 DEBUG: Fetch request for auth_key:', auth_key);
+        console.log('🔍 Fetch request for auth_key:', auth_key);
         
         // List all scripts in storage to see what actually exists
         const { blobs } = await list({
@@ -316,29 +380,23 @@ export default async function handler(req, res) {
           limit: 50
         });
         
-        console.log('📁 DEBUG: Scripts in storage:', blobs.map(b => ({
-          pathname: b.pathname,
-          filename: b.pathname.replace('scripts/', '')
-        })));
+        console.log('📁 Scripts in storage:', blobs.length, 'total');
         
         const expectedPath = `scripts/${auth_key}.lua`;
-        console.log('🎯 DEBUG: Looking for:', expectedPath);
+        console.log('🎯 Looking for:', expectedPath);
         
         // Check if our expected file exists
         const matchingBlob = blobs.find(b => b.pathname === expectedPath);
         
         if (matchingBlob) {
-          console.log('✅ DEBUG: Found exact match!', {
-            pathname: matchingBlob.pathname,
-            url: matchingBlob.url
-          });
+          console.log('✅ Found exact match:', matchingBlob.pathname);
           
           try {
             const response = await fetch(matchingBlob.url);
             if (response.ok) {
               const script = await response.text();
               
-              console.log('✅ DEBUG: Script retrieved successfully:', {
+              console.log('✅ Script retrieved successfully:', {
                 auth_key,
                 script_length: script.length,
                 user_data: user_data ? 'present' : 'missing'
@@ -359,41 +417,27 @@ export default async function handler(req, res) {
                 success: true,
                 script: script,
                 timestamp: Date.now(),
-                debug: {
-                  requested: auth_key,
-                  found_path: matchingBlob.pathname,
-                  script_length: script.length
-                }
+                message: 'Script retrieved successfully'
               });
             } else {
-              console.error('❌ DEBUG: Failed to fetch blob content:', response.status, response.statusText);
+              console.error('❌ Failed to fetch blob content:', response.status, response.statusText);
             }
           } catch (fetchError) {
-            console.error('❌ DEBUG: Error fetching blob content:', fetchError);
+            console.error('❌ Error fetching blob content:', fetchError);
           }
         }
         
-        // If no exact match found, return detailed debug info
-        console.log('❌ DEBUG: No exact match found');
+        // If no exact match found
+        console.log('❌ Script not found:', auth_key);
         
         return res.status(401).json({
           success: false,
-          message: 'Script not found in blob storage',
-          debug: {
-            requested_auth_key: auth_key,
-            expected_path: expectedPath,
-            available_scripts: blobs.map(b => ({
-              path: b.pathname,
-              filename: b.pathname.replace('scripts/', ''),
-              size: b.size
-            })),
-            total_scripts_found: blobs.length,
-            search_prefix: 'scripts/'
-          }
+          message: 'Script not found or access denied',
+          requested_key: auth_key
         });
 
       } catch (error) {
-        console.error('❌ DEBUG: Overall fetch error:', error);
+        console.error('❌ Fetch error:', error);
         return res.status(500).json({
           success: false,
           message: 'Script retrieval failed: ' + error.message,
@@ -408,6 +452,9 @@ export default async function handler(req, res) {
 
     // List Scripts (for management)
     if (action === 'list_scripts') {
+      const { session_token } = req.body;
+      const session = activeSessions.get(session_token);
+      
       try {
         const { blobs } = await list({
           prefix: 'scripts/',
@@ -421,9 +468,12 @@ export default async function handler(req, res) {
           // Try to get metadata
           let metadata = null;
           try {
-            const metaResponse = await fetch(`https://blob.vercel-storage.com/meta/${filename}.json`);
-            if (metaResponse.ok) {
-              metadata = await metaResponse.json();
+            const metaBlobs = await list({ prefix: `meta/${filename}` });
+            if (metaBlobs.blobs.length > 0) {
+              const metaResponse = await fetch(metaBlobs.blobs[0].url);
+              if (metaResponse.ok) {
+                metadata = await metaResponse.json();
+              }
             }
           } catch (metaError) {
             // Metadata not found, continue without it
@@ -441,7 +491,8 @@ export default async function handler(req, res) {
         return res.status(200).json({
           success: true,
           scripts: scripts,
-          total: scripts.length
+          total: scripts.length,
+          user: session.username
         });
       } catch (error) {
         console.error('❌ List scripts error:', error);
@@ -454,7 +505,7 @@ export default async function handler(req, res) {
 
     return res.status(400).json({
       success: false,
-      message: 'Invalid action'
+      message: 'Invalid action: ' + action
     });
 
   } catch (error) {
