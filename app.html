@@ -83,6 +83,40 @@
             100% { transform: rotate(360deg) translateY(-20px); opacity: 0.2; }
         }
 
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .loading-text {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: loading-dots 1.5s infinite;
+        }
+
+        @keyframes loading-dots {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+        }
+
         /* Main Layout */
         .workspace {
             min-height: 100vh;
@@ -94,6 +128,12 @@
             grid-template-columns: 280px 1fr 300px;
             grid-template-rows: auto 1fr;
             gap: 2rem;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .workspace.loaded {
+            opacity: 1;
         }
 
         /* Header */
@@ -123,6 +163,12 @@
             -webkit-text-fill-color: transparent;
         }
 
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
         .status-indicator {
             padding: 0.5rem 1rem;
             background: rgba(34, 197, 94, 0.1);
@@ -132,26 +178,19 @@
             color: #22c55e;
         }
 
-        .stats-bar {
-            display: flex;
-            gap: 2rem;
-            font-size: 0.9rem;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-number {
-            display: block;
-            font-weight: 600;
-            font-size: 1.1rem;
+        .logout-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
             color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .stat-label {
-            color: #888;
-            font-size: 0.8rem;
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.1);
         }
 
         /* Navigation Panel */
@@ -496,28 +535,27 @@
                 grid-template-columns: 1fr;
             }
         }
-
-        /* Loading Animation */
-        .loading::after {
-            content: '';
-            animation: loading-dots 1.5s infinite;
-        }
-
-        @keyframes loading-dots {
-            0% { content: '.'; }
-            33% { content: '..'; }
-            66% { content: '...'; }
-        }
     </style>
 </head>
 <body>
     <div id="particles"></div>
     
-    <div class="workspace">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-text">LuaSeel</div>
+        <div class="loading-text loading-dots">Authenticating</div>
+    </div>
+
+    <div id="workspace" class="workspace">
         <!-- Header -->
         <div class="header">
             <div class="logo-section">
                 <div class="logo">LuaSeel</div>
+            </div>
+            <div class="user-info">
+                <div class="status-indicator">Authenticated</div>
+                <span id="userDisplay">Loading...</span>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
         </div>
 
@@ -631,8 +669,8 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100" required></textarea
                 <div class="widget-title">Recent Activity</div>
                 <div class="widget-content">
                     <div style="font-size: 0.8rem; color: #666;">
-                        • 3 scripts executed (5min ago)<br>
-                        • New upload completed<br>
+                        • Session authenticated<br>
+                        • Platform ready<br>
                         • System status: Operational
                     </div>
                 </div>
@@ -641,6 +679,10 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100" required></textarea
     </div>
 
     <script>
+        let sessionToken = null;
+        let currentUser = null;
+        let scripts = JSON.parse(localStorage.getItem('luaSealScripts')) || {};
+
         // Initialize particles and shapes
         function createParticles() {
             const container = document.getElementById('particles');
@@ -667,9 +709,74 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100" required></textarea
             }
         }
 
-        // Storage and utilities
-        let scripts = JSON.parse(localStorage.getItem('luaSealScripts')) || {};
-        
+        // Check authentication
+        async function checkAuthentication() {
+            const stored = localStorage.getItem('luaseel_session');
+            if (!stored) {
+                redirectToLogin();
+                return false;
+            }
+
+            const session = JSON.parse(stored);
+            
+            try {
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'verify_session',
+                        session_token: session.token
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.valid) {
+                    sessionToken = session.token;
+                    currentUser = { username: result.username, role: result.role };
+                    
+                    document.getElementById('userDisplay').textContent = `${result.username} (${result.role})`;
+                    
+                    return true;
+                } else {
+                    localStorage.removeItem('luaseel_session');
+                    redirectToLogin();
+                    return false;
+                }
+            } catch (error) {
+                console.error('Authentication check failed:', error);
+                redirectToLogin();
+                return false;
+            }
+        }
+
+        function redirectToLogin() {
+            window.location.href = '/login.html'; // or wherever your login page is
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                if (sessionToken) {
+                    await fetch('/api/fetch/script', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'logout',
+                            session_token: sessionToken
+                        })
+                    });
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+            
+            localStorage.removeItem('luaseel_session');
+            localStorage.removeItem('luaseel_authenticated');
+            redirectToLogin();
+        }
+
+        // Utility functions
         function generateId(length = 12) {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             return Array.from({length}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
@@ -860,7 +967,6 @@ return loader`;
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             document.querySelectorAll('.content-panel').forEach(panel => panel.classList.remove('active'));
             
-            // Find the clicked button and make it active
             const clickedButton = document.querySelector(`[onclick="switchPanel('${panelName}')"]`);
             if (clickedButton) {
                 clickedButton.classList.add('active');
@@ -870,11 +976,6 @@ return loader`;
             if (panelName === 'manage') {
                 loadScriptList();
             }
-        }
-
-        // Update stats
-        function updateStats() {
-            document.getElementById('totalScripts').textContent = Object.keys(scripts).length;
         }
 
         // Upload form handler
@@ -902,6 +1003,7 @@ return loader`;
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'upload_script',
+                        session_token: sessionToken,
                         script_data: { script_id: scriptId, api_key: apiKey, script_code: luaCode, script_name: scriptName, description }
                     })
                 });
@@ -942,7 +1044,6 @@ return loader`;
                     </div>
                 `;
                 
-                updateStats();
                 e.target.reset();
                 
             } catch (error) {
@@ -1074,7 +1175,6 @@ return loader`;
         // Utility functions
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                // Simple feedback
                 const btn = event.target;
                 const originalText = btn.textContent;
                 btn.textContent = 'Copied!';
@@ -1087,23 +1187,35 @@ return loader`;
                 delete scripts[scriptId];
                 localStorage.setItem('luaSealScripts', JSON.stringify(scripts));
                 loadScriptList();
-                updateStats();
             }
         }
 
-        // Initialize
-        createParticles();
-        updateStats();
-        loadScriptList();
-
-        // Handle URL hash
-        window.addEventListener('load', function() {
-            const hash = window.location.hash.substring(1);
-            if (hash && scripts[hash]) {
-                switchPanel('access');
-                document.querySelector('input[name="scriptId"]').value = hash;
+        // Initialize application
+        async function initializeApp() {
+            createParticles();
+            
+            const isAuthenticated = await checkAuthentication();
+            if (isAuthenticated) {
+                // Hide loading screen and show workspace
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('workspace').classList.add('loaded');
+                
+                // Set up logout button
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+                
+                loadScriptList();
+                
+                // Handle URL hash
+                const hash = window.location.hash.substring(1);
+                if (hash && scripts[hash]) {
+                    switchPanel('access');
+                    document.querySelector('input[name="scriptId"]').value = hash;
+                }
             }
-        });
+        }
+
+        // Start the application
+        window.addEventListener('load', initializeApp);
     </script>
 </body>
 </html>
