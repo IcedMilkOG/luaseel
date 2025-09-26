@@ -3,6 +3,569 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuaSeel - Login</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Animated Background */
+        #particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            animation: float 12s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.2; }
+            25% { transform: translateY(-40px) translateX(15px) scale(1.3); opacity: 0.6; }
+            50% { transform: translateY(-80px) translateX(-20px) scale(0.7); opacity: 1; }
+            75% { transform: translateY(-40px) translateX(25px) scale(1.1); opacity: 0.4; }
+        }
+
+        .geo-shape {
+            position: fixed;
+            border: 1px solid rgba(255,255,255,0.08);
+            animation: rotate 25s linear infinite;
+            z-index: -1;
+        }
+
+        .geo-shape.triangle {
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 20px solid rgba(255,255,255,0.03);
+            border-radius: 2px;
+        }
+
+        .geo-shape.square {
+            width: 16px;
+            height: 16px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 3px;
+        }
+
+        .geo-shape.circle {
+            width: 14px;
+            height: 14px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 50%;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg) translateY(0px); opacity: 0.1; }
+            50% { opacity: 0.6; }
+            100% { transform: rotate(360deg) translateY(-30px); opacity: 0.1; }
+        }
+
+        /* Login Container */
+        .login-container {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 3rem;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05), rgba(255,255,255,0.1));
+            border-radius: 20px;
+            z-index: -1;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-subtitle {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #cccccc;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.4);
+            background: rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.05);
+        }
+
+        .form-input::placeholder {
+            color: #666;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #ffffff, #cccccc);
+            color: #000000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255,255,255,0.2);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #4ade80;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .loading {
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            animation: loading-dots 1.5s infinite;
+        }
+
+        @keyframes loading-dots {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+        }
+
+        .admin-section {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .admin-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        .create-user-form {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .secondary-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #ffffff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .role-select {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .role-select option {
+            background: #0a0a0a;
+            color: #ffffff;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="particles"></div>
+    
+    <div class="login-container">
+        <div class="logo-section">
+            <div class="logo">LuaSeel</div>
+            <div class="login-subtitle">Secure Script Hosting Platform</div>
+        </div>
+
+        <div id="loginSection">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="username" class="form-input" placeholder="Enter your username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+                </div>
+                
+                <button type="submit" id="loginBtn" class="login-btn">Sign In</button>
+            </form>
+            
+            <div id="loginMessage"></div>
+        </div>
+
+        <div id="adminSection" style="display: none;" class="admin-section">
+            <div class="admin-title">Admin Panel</div>
+            
+            <div class="create-user-form">
+                <form id="createUserForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">New Username</label>
+                            <input type="text" id="newUsername" class="form-input" placeholder="Username" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Role</label>
+                            <select id="newUserRole" class="role-select">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="newPassword" class="form-input" placeholder="New user password" required>
+                    </div>
+                    
+                    <button type="submit" class="secondary-btn">Create User</button>
+                </form>
+                
+                <div id="createUserMessage"></div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <button id="proceedBtn" class="login-btn">Access LuaSeel Platform</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionToken = null;
+        let currentUser = null;
+
+        // Initialize particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            
+            // Create floating particles
+            for (let i = 0; i < 40; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 12 + 's';
+                container.appendChild(particle);
+            }
+            
+            // Create geometric shapes
+            const shapes = ['triangle', 'square', 'circle'];
+            for (let i = 0; i < 12; i++) {
+                const shape = document.createElement('div');
+                shape.className = 'geo-shape ' + shapes[Math.floor(Math.random() * shapes.length)];
+                shape.style.left = Math.random() * 100 + '%';
+                shape.style.top = Math.random() * 100 + '%';
+                shape.style.animationDelay = Math.random() * 25 + 's';
+                container.appendChild(shape);
+            }
+        }
+
+        // Show message
+        function showMessage(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div class="${isError ? 'error-message' : 'success-message'}">
+                    ${message}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 5000);
+        }
+
+        // Check existing session
+        async function checkSession() {
+            const stored = localStorage.getItem('luaseel_session');
+            if (stored) {
+                const session = JSON.parse(stored);
+                
+                try {
+                    const response = await fetch('/api/fetch/script', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'verify_session',
+                            session_token: session.token
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.valid) {
+                        sessionToken = session.token;
+                        currentUser = { username: result.username, role: result.role };
+                        
+                        if (result.role === 'admin') {
+                            showAdminPanel();
+                        } else {
+                            redirectToApp();
+                        }
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Session check failed:', error);
+                }
+                
+                // Clear invalid session
+                localStorage.removeItem('luaseel_session');
+            }
+            return false;
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = 'Signing in<span class="loading"></span>';
+            
+            try {
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'login',
+                        username,
+                        password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    sessionToken = result.session_token;
+                    currentUser = { username: result.username, role: result.role };
+                    
+                    // Store session
+                    localStorage.setItem('luaseel_session', JSON.stringify({
+                        token: sessionToken,
+                        username: result.username,
+                        role: result.role,
+                        created: Date.now()
+                    }));
+                    
+                    showMessage('loginMessage', `Welcome back, ${result.username}!`);
+                    
+                    if (result.role === 'admin') {
+                        setTimeout(() => showAdminPanel(), 1000);
+                    } else {
+                        setTimeout(() => redirectToApp(), 1500);
+                    }
+                } else {
+                    showMessage('loginMessage', result.message, true);
+                }
+            } catch (error) {
+                showMessage('loginMessage', 'Connection failed. Please try again.', true);
+                console.error('Login error:', error);
+            }
+            
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = 'Sign In';
+        });
+
+        // Show admin panel
+        function showAdminPanel() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('adminSection').style.display = 'block';
+        }
+
+        // Create user form handler
+        document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const newUsername = document.getElementById('newUsername').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const newUserRole = document.getElementById('newUserRole').value;
+            
+            try {
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'create_user',
+                        session_token: sessionToken,
+                        new_username: newUsername,
+                        new_password: newPassword,
+                        new_role: newUserRole
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('createUserMessage', `User "${result.username}" created successfully with role: ${result.role}`);
+                    document.getElementById('createUserForm').reset();
+                } else {
+                    showMessage('createUserMessage', result.message, true);
+                }
+            } catch (error) {
+                showMessage('createUserMessage', 'Failed to create user. Please try again.', true);
+                console.error('Create user error:', error);
+            }
+        });
+
+        // Proceed to app
+        document.getElementById('proceedBtn').addEventListener('click', function() {
+            redirectToApp();
+        });
+
+        // Redirect to main app
+        function redirectToApp() {
+            // In a real implementation, you'd redirect to the main app
+            // For now, we'll just show a message and reload to the main interface
+            alert('Redirecting to LuaSeel platform...');
+            
+            // Hide login page and show main app
+            // You would typically redirect to a different page or show the main app interface
+            window.location.reload();
+            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LuaSeel - Script Hosting Platform</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
@@ -1074,15 +1637,11 @@ return loader`;
         // Utility functions
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                // Simple feedback - find the button that was clicked
-                const activeElement = document.activeElement;
-                if (activeElement && activeElement.tagName === 'BUTTON') {
-                    const originalText = activeElement.textContent;
-                    activeElement.textContent = 'Copied!';
-                    setTimeout(() => activeElement.textContent = originalText, 1500);
-                }
-            }).catch(() => {
-                alert('Failed to copy to clipboard');
+                // Simple feedback
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = originalText, 1500);
             });
         }
 
@@ -1106,6 +1665,22 @@ return loader`;
             if (hash && scripts[hash]) {
                 switchPanel('access');
                 document.querySelector('input[name="scriptId"]').value = hash;
+            }
+        });
+    </script>
+</body>
+</html>
+        }
+
+        // Initialize
+        createParticles();
+        
+        // Check for existing session on load
+        window.addEventListener('load', async function() {
+            const hasSession = await checkSession();
+            if (!hasSession) {
+                // Show login form
+                document.getElementById('loginSection').style.display = 'block';
             }
         });
     </script>
