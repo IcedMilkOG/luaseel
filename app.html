@@ -793,7 +793,7 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
             }
         }
 
-        // Check authentication
+        // Check authentication with timeout
         async function checkAuthentication() {
             const stored = localStorage.getItem('luaseel_session');
             if (!stored) {
@@ -806,7 +806,13 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
             
             try {
                 console.log('Verifying session with server...');
-                const response = await fetch('/api/fetch/script', {
+                
+                // Add timeout to prevent hanging
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Authentication timeout')), 10000)
+                );
+                
+                const fetchPromise = fetch('/api/fetch/script', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -815,7 +821,9 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
                     })
                 });
                 
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
                 const result = await response.json();
+                
                 console.log('Session verification result:', result);
                 
                 if (result.success && result.valid) {
@@ -834,25 +842,34 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
                 }
             } catch (error) {
                 console.error('Authentication check failed:', error);
-                alert('Authentication check failed. Please try logging in again.');
-                redirectToLogin();
+                
+                // Show error message to user
+                document.body.innerHTML = `
+                    <div style="
+                        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                        background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+                        border-radius: 12px; padding: 2rem; text-align: center; color: white;
+                        font-family: 'Space Grotesk', sans-serif; max-width: 400px;
+                    ">
+                        <h3 style="margin: 0 0 1rem 0; color: #ff6b6b;">Authentication Failed</h3>
+                        <p style="margin: 0 0 1.5rem 0; color: #cccccc;">
+                            Unable to verify your session. This could be due to a network issue or expired session.
+                        </p>
+                        <button onclick="window.location.href='/index.html'" style="
+                            background: linear-gradient(135deg, #ffffff, #cccccc);
+                            color: #000000; border: none; padding: 1rem 2rem;
+                            border-radius: 8px; font-weight: 600; cursor: pointer;
+                        ">Return to Login</button>
+                    </div>
+                `;
+                
                 return false;
             }
         }
 
         function redirectToLogin() {
-            // Try different possible login page locations
-            const possiblePaths = [
-                '/login.html',
-                '/index.html', 
-                '/',
-                window.location.origin + '/login.html',
-                window.location.origin + '/'
-            ];
-            
-            // Use the first path for now, but user can modify as needed
             console.log('Redirecting to login page...');
-            window.location.href = possiblePaths[0];
+            window.location.href = '/index.html'; // Fixed: changed from login.html to index.html
         }
 
         // Logout function
