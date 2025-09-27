@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LuaSeel - Login</title>
+    <title>LuaSeel - Access Portal</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
         
         * {
             margin: 0;
@@ -15,7 +15,7 @@
 
         body {
             font-family: 'Space Grotesk', sans-serif;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #262626 100%);
             color: #ffffff;
             min-height: 100vh;
             display: flex;
@@ -25,316 +25,470 @@
             position: relative;
         }
 
-        body::before {
-            content: '';
+        /* Animated Grid Background */
+        .grid-background {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 40%, rgba(120, 198, 255, 0.2) 0%, transparent 50%);
+            width: 100vw;
+            height: 100vh;
             z-index: -2;
+            opacity: 0.3;
         }
 
-        /* Animated Background */
-        #particles {
+        .grid-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .grid-line.horizontal {
+            width: 100%;
+            height: 1px;
+            animation-delay: var(--delay);
+        }
+
+        .grid-line.vertical {
+            height: 100%;
+            width: 1px;
+            animation-delay: var(--delay);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Floating Geometric Elements */
+        .floating-elements {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: -1;
+            pointer-events: none;
         }
 
-        .particle {
+        .float-element {
             position: absolute;
-            width: 3px;
-            height: 3px;
-            background: linear-gradient(45deg, rgba(255,255,255,0.8), rgba(120, 119, 198, 0.6));
+            border: 1px solid #00ff88;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .float-element.square {
+            width: 20px;
+            height: 20px;
+            animation-duration: 12s;
+        }
+
+        .float-element.circle {
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            animation: float 15s infinite ease-in-out;
-            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            animation-duration: 10s;
+        }
+
+        .float-element.triangle {
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 14px solid #00ff88;
+            border-radius: 2px;
+            animation-duration: 14s;
         }
 
         @keyframes float {
             0%, 100% { 
-                transform: translateY(0px) translateX(0px) scale(1) rotate(0deg); 
-                opacity: 0.4; 
+                transform: translateY(0) rotate(0deg); 
+                opacity: 0.3; 
             }
             25% { 
-                transform: translateY(-60px) translateX(30px) scale(1.5) rotate(90deg); 
-                opacity: 0.8; 
+                transform: translateY(-30px) rotate(90deg); 
+                opacity: 0.7; 
             }
             50% { 
-                transform: translateY(-120px) translateX(-40px) scale(0.8) rotate(180deg); 
+                transform: translateY(-60px) rotate(180deg); 
                 opacity: 1; 
             }
             75% { 
-                transform: translateY(-60px) translateX(50px) scale(1.2) rotate(270deg); 
-                opacity: 0.6; 
+                transform: translateY(-30px) rotate(270deg); 
+                opacity: 0.5; 
             }
         }
 
-        .geo-shape {
+        /* Scanning Lines */
+        .scan-line {
             position: fixed;
-            border: 2px solid rgba(255,255,255,0.1);
-            animation: rotate 30s linear infinite;
-            z-index: -1;
-            filter: blur(0.5px);
-        }
-
-        .geo-shape.triangle {
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-bottom: 35px solid rgba(120, 119, 198, 0.2);
-            border-radius: 5px;
-            filter: drop-shadow(0 0 15px rgba(120, 119, 198, 0.3));
-        }
-
-        .geo-shape.square {
-            width: 25px;
-            height: 25px;
-            background: linear-gradient(45deg, rgba(255, 119, 198, 0.2), rgba(120, 198, 255, 0.2));
-            border-radius: 6px;
-            filter: drop-shadow(0 0 15px rgba(255, 119, 198, 0.3));
-        }
-
-        .geo-shape.circle {
-            width: 22px;
-            height: 22px;
-            background: radial-gradient(circle, rgba(120, 198, 255, 0.3), rgba(120, 119, 198, 0.1));
-            border-radius: 50%;
-            filter: drop-shadow(0 0 15px rgba(120, 198, 255, 0.4));
-        }
-
-        @keyframes rotate {
-            0% { 
-                transform: rotate(0deg) translateY(0px) scale(1); 
-                opacity: 0.3; 
-            }
-            50% { 
-                opacity: 0.8; 
-                transform: rotate(180deg) translateY(-40px) scale(1.2); 
-            }
-            100% { 
-                transform: rotate(360deg) translateY(-60px) scale(0.9); 
-                opacity: 0.2; 
-            }
-        }
-
-        /* Login Container */
-        .login-container {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 24px;
-            padding: 3rem;
-            backdrop-filter: blur(20px);
-            box-shadow: 
-                0 20px 40px rgba(0,0,0,0.4),
-                0 0 100px rgba(120, 119, 198, 0.1),
-                inset 0 1px 0 rgba(255,255,255,0.2);
             width: 100%;
-            max-width: 450px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            animation: scan 6s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes scan {
+            0% { top: -2px; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 100vh; opacity: 0; }
+        }
+
+        /* Main Container */
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .auth-panel {
+            background: rgba(0,0,0,0.9);
+            border: 1px solid #00ff88;
+            border-radius: 0;
+            padding: 3rem;
+            backdrop-filter: blur(10px);
             position: relative;
-            transform: translateY(0);
-            transition: all 0.3s ease;
-        }
-
-        .login-container:hover {
-            transform: translateY(-5px);
+            width: 100%;
+            max-width: 400px;
             box-shadow: 
-                0 30px 60px rgba(0,0,0,0.5),
-                0 0 120px rgba(120, 119, 198, 0.2),
-                inset 0 1px 0 rgba(255,255,255,0.3);
+                0 0 50px rgba(0,255,136,0.1),
+                inset 0 0 50px rgba(0,255,136,0.02);
         }
 
-        .login-container::before {
+        .auth-panel::before {
             content: '';
             position: absolute;
             top: -1px;
             left: -1px;
             right: -1px;
             bottom: -1px;
-            background: linear-gradient(45deg, 
-                rgba(120, 119, 198, 0.3), 
-                rgba(255, 119, 198, 0.2), 
-                rgba(120, 198, 255, 0.3),
-                rgba(120, 119, 198, 0.2)
-            );
-            border-radius: 24px;
+            background: linear-gradient(45deg, #00ff88, transparent, #00ff88);
             z-index: -1;
-            animation: borderGlow 4s ease-in-out infinite alternate;
+            animation: borderScan 3s linear infinite;
         }
 
-        @keyframes borderGlow {
-            0% { opacity: 0.5; }
-            100% { opacity: 1; }
+        @keyframes borderScan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
         }
 
-        .logo-section {
+        .auth-panel::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 1px solid rgba(0,255,136,0.2);
+            pointer-events: none;
+        }
+
+        /* Header */
+        .auth-header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2.5rem;
             position: relative;
         }
 
         .logo {
-            font-size: 3rem;
+            font-size: 2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #ffffff, #7777ff, #ff77c7, #77c7ff);
-            background-size: 400% 400%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.8rem;
-            animation: gradientShift 6s ease-in-out infinite;
-            filter: drop-shadow(0 0 20px rgba(120, 119, 198, 0.5));
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        .login-subtitle {
-            color: rgba(255,255,255,0.8);
-            font-size: 1rem;
-            font-weight: 300;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
+            color: #00ff88;
             margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 0.9rem;
-            color: #cccccc;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 1.2rem 1.5rem;
-            background: rgba(0,0,0,0.4);
-            border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            color: #ffffff;
-            font-family: inherit;
-            font-size: 1rem;
-            transition: all 0.3s ease;
             position: relative;
+            text-transform: uppercase;
+            letter-spacing: 3px;
         }
 
-        .form-input:focus {
-            outline: none;
-            border-color: rgba(120, 119, 198, 0.6);
-            background: rgba(0,0,0,0.6);
-            box-shadow: 
-                0 0 0 4px rgba(120, 119, 198, 0.1),
-                0 0 20px rgba(120, 119, 198, 0.3);
-            transform: translateY(-2px);
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 2px;
+            background: #00ff88;
+            animation: expand 2s ease-in-out infinite alternate;
         }
 
-        .form-input::placeholder {
-            color: rgba(255,255,255,0.4);
+        @keyframes expand {
+            0% { width: 60px; opacity: 1; }
+            100% { width: 100px; opacity: 0.5; }
         }
 
-        .login-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #7777ff, #ff77c7, #77c7ff);
-            background-size: 400% 400%;
-            color: #ffffff;
+        .auth-mode {
+            display: flex;
+            margin-bottom: 2rem;
+            border: 1px solid #333;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.8rem;
+            background: transparent;
             border: none;
-            padding: 1.2rem 2rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1.1rem;
+            color: #666;
+            font-family: inherit;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-family: inherit;
-            margin-bottom: 1.5rem;
             position: relative;
-            overflow: hidden;
-            animation: gradientShift 6s ease-in-out infinite;
-            box-shadow: 0 10px 30px rgba(120, 119, 198, 0.3);
         }
 
-        .login-btn::before {
+        .mode-btn.active {
+            color: #00ff88;
+            background: rgba(0,255,136,0.1);
+        }
+
+        .mode-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #00ff88;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            0% { width: 0; left: 50%; }
+            100% { width: 100%; left: 0; }
+        }
+
+        /* Forms */
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #00ff88;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            color: #ffffff;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0,255,136,0.3);
+        }
+
+        .input-field::placeholder {
+            color: #666;
+        }
+
+        .input-group::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #00ff88;
+            transition: width 0.3s ease;
+        }
+
+        .input-group:focus-within::after {
+            width: 100%;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: transparent;
+            border: 2px solid #00ff88;
+            color: #00ff88;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .submit-btn::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+            background: rgba(0,255,136,0.1);
+            transition: left 0.3s ease;
         }
 
-        .login-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(120, 119, 198, 0.4);
+        .submit-btn:hover::before {
+            left: 0;
         }
 
-        .login-btn:hover::before {
-            left: 100%;
+        .submit-btn:hover {
+            background: rgba(0,255,136,0.1);
+            box-shadow: 0 0 20px rgba(0,255,136,0.3);
         }
 
-        .login-btn:disabled {
-            opacity: 0.6;
+        .submit-btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
-        .error-message {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 127, 0.1));
-            border: 2px solid rgba(239, 68, 68, 0.4);
-            border-radius: 12px;
-            padding: 1.2rem;
+        /* Messages */
+        .message {
+            padding: 1rem;
             margin-bottom: 1rem;
-            color: #ff8a8a;
-            font-size: 0.95rem;
+            border-left: 3px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .message.error {
+            background: rgba(255,0,0,0.1);
+            border-color: #ff0000;
+            color: #ff6666;
+        }
+
+        .message.success {
+            background: rgba(0,255,136,0.1);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            display: none;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #333;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .admin-title {
+            color: #00ff88;
+            margin-bottom: 1.5rem;
             text-align: center;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.2);
-            animation: shake 0.5s ease-in-out;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+        .admin-grid {
+            display: grid;
+            gap: 1rem;
         }
 
-        .success-message {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1));
-            border: 2px solid rgba(34, 197, 94, 0.4);
-            border-radius: 12px;
-            padding: 1.2rem;
+        .admin-section {
+            background: rgba(0,255,136,0.05);
+            border: 1px solid rgba(0,255,136,0.2);
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .admin-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        .section-title {
+            color: #00ff88;
             margin-bottom: 1rem;
-            color: #6ee7b7;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .code-display {
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #00ff88;
             text-align: center;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.2);
-            animation: slideIn 0.5s ease-out;
+            letter-spacing: 2px;
         }
 
-        @keyframes slideIn {
-            0% { 
-                opacity: 0; 
-                transform: translateY(-20px) scale(0.95); 
-            }
-            100% { 
-                opacity: 1; 
-                transform: translateY(0) scale(1); 
-            }
+        .access-codes-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            padding: 1rem;
         }
 
+        .code-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .code-item:last-child {
+            border-bottom: none;
+        }
+
+        .code-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: #00ff88;
+        }
+
+        .code-status {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Loading Animation */
         .loading {
             position: relative;
         }
@@ -345,222 +499,111 @@
         }
 
         @keyframes loading-dots {
-            0% { content: '.'; }
-            33% { content: '..'; }
-            66% { content: '...'; }
+            0% { content: '...'; }
+            33% { content: '....'; }
+            66% { content: '.....'; }
         }
 
-        .admin-section {
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .admin-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #ffffff;
-            text-align: center;
-        }
-
-        .create-user-form {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-top: 1rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .secondary-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #ffffff;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .secondary-btn:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
-        }
-
-        .role-select {
-            width: 100%;
-            padding: 1rem 1.2rem;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px;
-            color: #ffffff;
-            font-family: inherit;
-            font-size: 1rem;
-        }
-
-        .role-select option {
-            background: #0a0a0a;
-            color: #ffffff;
-        }
-
+        /* Responsive */
         @media (max-width: 480px) {
-            .login-container {
-                margin: 1rem;
+            .auth-panel {
                 padding: 2rem;
-                border-radius: 20px;
+                margin: 1rem;
             }
             
             .logo {
-                font-size: 2.5rem;
+                font-size: 1.5rem;
+                letter-spacing: 2px;
             }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            body::before {
-                background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.2) 0%, transparent 40%),
-                            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.2) 0%, transparent 40%);
-            }
-
-            .particle {
-                width: 2px;
-                height: 2px;
-            }
-
-            .geo-shape.triangle {
-                border-left: 15px solid transparent;
-                border-right: 15px solid transparent;
-                border-bottom: 25px solid rgba(120, 119, 198, 0.15);
-            }
-
-            .geo-shape.square {
-                width: 20px;
-                height: 20px;
-            }
-
-            .geo-shape.circle {
-                width: 18px;
-                height: 18px;
-            }
-        }
-
-        /* Page Load Animation */
-        .login-container {
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            0% {
-                opacity: 0;
-                transform: translateY(40px) scale(0.95);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* Additional Visual Enhancements */
-        .form-label {
-            display: block;
-            margin-bottom: 0.8rem;
-            font-weight: 500;
-            font-size: 0.95rem;
-            color: rgba(255,255,255,0.9);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.85rem;
-        }
-
-        .form-group {
-            margin-bottom: 2rem;
-            position: relative;
-        }
-
-        .form-group::after {
-            content: '';
-            position: absolute;
-            bottom: -0.5rem;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, rgba(120, 119, 198, 0.6), rgba(255, 119, 198, 0.6));
-            transition: width 0.3s ease;
-        }
-
-        .form-group:focus-within::after {
-            width: 100%;
         }
     </style>
 </head>
 <body>
-    <div id="particles"></div>
-    
-    <div class="login-container">
-        <div class="logo-section">
-            <div class="logo">LuaSeel</div>
-            <div class="login-subtitle">Secure Script Hosting Platform</div>
-        </div>
+    <!-- Animated Background -->
+    <div class="grid-background" id="gridBackground"></div>
+    <div class="floating-elements" id="floatingElements"></div>
+    <div class="scan-line"></div>
 
-        <div id="loginSection">
-            <form id="loginForm">
-                <div class="form-group">
-                    <label class="form-label">Username</label>
-                    <input type="text" id="username" class="form-input" placeholder="Enter your username" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
-                </div>
-                
-                <button type="submit" id="loginBtn" class="login-btn">Sign In</button>
-            </form>
-            
-            <div id="loginMessage"></div>
-        </div>
-
-        <div id="adminSection" style="display: none;" class="admin-section">
-            <div class="admin-title">Admin Panel</div>
-            
-            <div class="create-user-form">
-                <form id="createUserForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">New Username</label>
-                            <input type="text" id="newUsername" class="form-input" placeholder="Username" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Role</label>
-                            <select id="newUserRole" class="role-select">
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input type="password" id="newPassword" class="form-input" placeholder="New user password" required>
-                    </div>
-                    
-                    <button type="submit" class="secondary-btn">Create User</button>
-                </form>
-                
-                <div id="createUserMessage"></div>
+    <div class="container">
+        <div class="auth-panel">
+            <div class="auth-header">
+                <div class="logo">LuaSeel</div>
             </div>
-            
-            <div style="text-align: center; margin-top: 1.5rem;">
-                <button id="proceedBtn" class="login-btn">Access LuaSeel Platform</button>
+
+            <!-- Mode Selection -->
+            <div class="auth-mode">
+                <button class="mode-btn active" onclick="switchMode('login')">ACCESS</button>
+                <button class="mode-btn" onclick="switchMode('register')">REGISTER</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active">
+                <div class="input-group">
+                    <label class="input-label">Username</label>
+                    <input type="text" id="loginUsername" class="input-field" required>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Password</label>
+                    <input type="password" id="loginPassword" class="input-field" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">Initialize</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form">
+                <div class="input-group">
+                    <label class="input-label">Username</label>
+                    <input type="text" id="registerUsername" class="input-field" required>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Password</label>
+                    <input type="password" id="registerPassword" class="input-field" required>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Access Code</label>
+                    <input type="text" id="accessCode" class="input-field" placeholder="RAC-XXXXXXXXXX" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">Create Account</button>
+            </form>
+
+            <div id="authMessage"></div>
+
+            <!-- Admin Panel -->
+            <div id="adminPanel" class="admin-panel">
+                <div class="admin-title">Administrator Control</div>
+                
+                <div class="admin-grid">
+                    <div class="admin-section">
+                        <div class="section-title">Generate Access Code</div>
+                        <div class="input-group">
+                            <label class="input-label">Valid For (Days)</label>
+                            <input type="number" id="codeValidDays" class="input-field" value="30" min="1" max="365">
+                        </div>
+                        <button onclick="generateAccessCode()" class="submit-btn">Generate RAC</button>
+                        <div id="generatedCode" class="code-display" style="margin-top: 1rem; display: none;"></div>
+                    </div>
+
+                    <div class="admin-section">
+                        <div class="section-title">Access Codes</div>
+                        <div id="accessCodesList" class="access-codes-list"></div>
+                        <button onclick="refreshAccessCodes()" class="submit-btn" style="margin-top: 1rem;">Refresh</button>
+                    </div>
+
+                    <div class="admin-section">
+                        <div class="section-title">User Management</div>
+                        <div id="usersList" class="access-codes-list"></div>
+                        <button onclick="refreshUsers()" class="submit-btn" style="margin-top: 1rem;">Refresh</button>
+                    </div>
+
+                    <div class="admin-section" style="text-align: center;">
+                        <button onclick="proceedToApp()" class="submit-btn">Enter Platform</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -569,43 +612,63 @@
         let sessionToken = null;
         let currentUser = null;
 
-        // Initialize particles
-        function createParticles() {
-            const container = document.getElementById('particles');
-            
-            // Create floating particles
-            for (let i = 0; i < 40; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 12 + 's';
-                container.appendChild(particle);
+        // Initialize animated background
+        function initializeBackground() {
+            const gridContainer = document.getElementById('gridBackground');
+            const floatingContainer = document.getElementById('floatingElements');
+
+            // Create grid lines
+            for (let i = 0; i < 20; i++) {
+                const hLine = document.createElement('div');
+                hLine.className = 'grid-line horizontal';
+                hLine.style.top = (i * 5) + '%';
+                hLine.style.setProperty('--delay', (i * 0.1) + 's');
+                gridContainer.appendChild(hLine);
+
+                const vLine = document.createElement('div');
+                vLine.className = 'grid-line vertical';
+                vLine.style.left = (i * 5) + '%';
+                vLine.style.setProperty('--delay', (i * 0.15) + 's');
+                gridContainer.appendChild(vLine);
             }
+
+            // Create floating elements
+            const shapes = ['square', 'circle', 'triangle'];
+            for (let i = 0; i < 15; i++) {
+                const element = document.createElement('div');
+                element.className = 'float-element ' + shapes[Math.floor(Math.random() * shapes.length)];
+                element.style.left = Math.random() * 100 + '%';
+                element.style.top = Math.random() * 100 + '%';
+                element.style.animationDelay = Math.random() * 8 + 's';
+                floatingContainer.appendChild(element);
+            }
+        }
+
+        // Switch between login and register modes
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
             
-            // Create geometric shapes
-            const shapes = ['triangle', 'square', 'circle'];
-            for (let i = 0; i < 12; i++) {
-                const shape = document.createElement('div');
-                shape.className = 'geo-shape ' + shapes[Math.floor(Math.random() * shapes.length)];
-                shape.style.left = Math.random() * 100 + '%';
-                shape.style.top = Math.random() * 100 + '%';
-                shape.style.animationDelay = Math.random() * 25 + 's';
-                container.appendChild(shape);
+            if (mode === 'login') {
+                document.querySelector('[onclick="switchMode(\'login\')"]').classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                document.querySelector('[onclick="switchMode(\'register\')"]').classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
             }
         }
 
         // Show message
-        function showMessage(elementId, message, isError = false) {
-            const element = document.getElementById(elementId);
-            element.innerHTML = `
-                <div class="${isError ? 'error-message' : 'success-message'}">
+        function showMessage(message, isError = false) {
+            const messageDiv = document.getElementById('authMessage');
+            messageDiv.innerHTML = `
+                <div class="message ${isError ? 'error' : 'success'}">
                     ${message}
                 </div>
             `;
             
             setTimeout(() => {
-                element.innerHTML = '';
+                messageDiv.innerHTML = '';
             }, 5000);
         }
 
@@ -634,7 +697,7 @@
                         if (result.role === 'admin') {
                             showAdminPanel();
                         } else {
-                            redirectToApp();
+                            proceedToApp();
                         }
                         return true;
                     }
@@ -642,7 +705,6 @@
                     console.error('Session check failed:', error);
                 }
                 
-                // Clear invalid session
                 localStorage.removeItem('luaseel_session');
             }
             return false;
@@ -652,12 +714,12 @@
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const submitBtn = this.querySelector('.submit-btn');
             
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = 'Signing in<span class="loading"></span>';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Connecting<span class="loading"></span>';
             
             try {
                 const response = await fetch('/api/fetch/script', {
@@ -676,7 +738,6 @@
                     sessionToken = result.session_token;
                     currentUser = { username: result.username, role: result.role };
                     
-                    // Store session
                     localStorage.setItem('luaseel_session', JSON.stringify({
                         token: sessionToken,
                         username: result.username,
@@ -684,150 +745,171 @@
                         created: Date.now()
                     }));
                     
-                    showMessage('loginMessage', `Welcome back, ${result.username}!`);
+                    showMessage(`Access granted: ${result.username}`);
                     
                     if (result.role === 'admin') {
                         setTimeout(() => showAdminPanel(), 1000);
                     } else {
-                        setTimeout(() => redirectToApp(), 1500);
+                        setTimeout(() => proceedToApp(), 1500);
                     }
                 } else {
-                    showMessage('loginMessage', result.message, true);
+                    showMessage(result.message, true);
                 }
             } catch (error) {
-                showMessage('loginMessage', 'Connection failed. Please try again.', true);
-                console.error('Login error:', error);
+                showMessage('Connection failed. System offline.', true);
             }
             
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = 'Sign In';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Initialize';
         });
 
-        // Show admin panel
-        function showAdminPanel() {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('adminSection').style.display = 'block';
-        }
-
-        // Create user form handler
-        document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+        // Register form handler
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const newUsername = document.getElementById('newUsername').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const newUserRole = document.getElementById('newUserRole').value;
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const accessCode = document.getElementById('accessCode').value;
+            const submitBtn = this.querySelector('.submit-btn');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Validating<span class="loading"></span>';
             
             try {
                 const response = await fetch('/api/fetch/script', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        action: 'create_user',
-                        session_token: sessionToken,
-                        new_username: newUsername,
-                        new_password: newPassword,
-                        new_role: newUserRole
+                        action: 'register_user',
+                        username,
+                        password,
+                        access_code: accessCode
                     })
                 });
                 
                 const result = await response.json();
                 
                 if (result.success) {
-                    showMessage('createUserMessage', `User "${result.username}" created successfully with role: ${result.role}`);
-                    document.getElementById('createUserForm').reset();
+                    showMessage('Account created successfully');
+                    setTimeout(() => {
+                        switchMode('login');
+                        document.getElementById('loginUsername').value = username;
+                    }, 1000);
                 } else {
-                    showMessage('createUserMessage', result.message, true);
+                    showMessage(result.message, true);
                 }
             } catch (error) {
-                showMessage('createUserMessage', 'Failed to create user. Please try again.', true);
-                console.error('Create user error:', error);
+                showMessage('Registration failed. System error.', true);
             }
+            
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Create Account';
         });
 
-        // Proceed to app
-        document.getElementById('proceedBtn').addEventListener('click', function() {
-            redirectToApp();
-        });
-
-        // FIXED: Redirect to main app
-        function redirectToApp() {
-            // Store the authenticated state
-            localStorage.setItem('luaseel_authenticated', 'true');
-            
-            // Redirect to the main application page
-            // Replace this with your actual main app URL
-            window.location.href = '/app.html'; // or wherever your main app is hosted
-            
-            // Fallback: If app.html doesn't exist, show the main interface inline
-            // You can uncomment this if you want to show the main app in the same page
-            // showMainApp();
+        // Show admin panel
+        function showAdminPanel() {
+            document.getElementById('adminPanel').classList.add('active');
+            refreshAccessCodes();
+            refreshUsers();
         }
 
-        // Optional: Function to show main app inline (if you don't want separate pages)
-        function showMainApp() {
-            document.body.innerHTML = `
-                <div style="padding: 2rem; text-align: center;">
-                    <h1 style="color: white; font-family: 'Space Grotesk', sans-serif;">
-                        Welcome to LuaSeel Platform
-                    </h1>
-                    <p style="color: #888; margin: 1rem 0;">
-                        Logged in as: ${currentUser.username} (${currentUser.role})
-                    </p>
-                    <div style="margin-top: 2rem;">
-                        <button onclick="location.reload()" style="
-                            background: linear-gradient(135deg, #ffffff, #cccccc);
-                            color: #000000;
-                            border: none;
-                            padding: 1rem 2rem;
-                            border-radius: 10px;
-                            font-weight: 600;
-                            cursor: pointer;
-                            margin-right: 1rem;
-                        ">Back to Login</button>
-                        <button onclick="logout()" style="
-                            background: rgba(255,255,255,0.05);
-                            border: 1px solid rgba(255,255,255,0.2);
-                            color: #ffffff;
-                            padding: 1rem 2rem;
-                            border-radius: 10px;
-                            cursor: pointer;
-                        ">Logout</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Logout function
-        async function logout() {
+        // Generate access code
+        async function generateAccessCode() {
+            const validDays = document.getElementById('codeValidDays').value;
+            
             try {
-                await fetch('/api/fetch/script', {
+                const response = await fetch('/api/fetch/script', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        action: 'logout',
+                        action: 'generate_access_code',
+                        session_token: sessionToken,
+                        valid_days: parseInt(validDays)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const codeDisplay = document.getElementById('generatedCode');
+                    codeDisplay.textContent = result.access_code;
+                    codeDisplay.style.display = 'block';
+                    refreshAccessCodes();
+                } else {
+                    showMessage(result.message, true);
+                }
+            } catch (error) {
+                showMessage('Failed to generate code', true);
+            }
+        }
+
+        // Refresh access codes list
+        async function refreshAccessCodes() {
+            try {
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'list_access_codes',
                         session_token: sessionToken
                     })
                 });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const list = document.getElementById('accessCodesList');
+                    list.innerHTML = result.codes.map(code => `
+                        <div class="code-item">
+                            <span class="code-value">${code.code}</span>
+                            <span class="code-status">${code.status} | ${code.expires}</span>
+                        </div>
+                    `).join('');
+                }
             } catch (error) {
-                console.error('Logout error:', error);
+                console.error('Failed to refresh codes:', error);
             }
-            
-            // Clear local storage and reload
-            localStorage.removeItem('luaseel_session');
-            localStorage.removeItem('luaseel_authenticated');
-            location.reload();
+        }
+
+        // Refresh users list
+        async function refreshUsers() {
+            try {
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'list_users',
+                        session_token: sessionToken
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const list = document.getElementById('usersList');
+                    list.innerHTML = result.users.map(user => `
+                        <div class="code-item">
+                            <span class="code-value">${user.username}</span>
+                            <span class="code-status">${user.role} | ${user.scripts || 0} scripts</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Failed to refresh users:', error);
+            }
+        }
+
+        // Proceed to main app
+        function proceedToApp() {
+            window.location.href = '/app.html';
         }
 
         // Initialize
-        createParticles();
+        initializeBackground();
         
         // Check for existing session on load
         window.addEventListener('load', async function() {
-            const hasSession = await checkSession();
-            if (!hasSession) {
-                // Show login form
-                document.getElementById('loginSection').style.display = 'block';
-            }
+            await checkSession();
         });
     </script>
 </body>
