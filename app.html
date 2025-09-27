@@ -601,6 +601,47 @@
 print('Hello from LuaSeel!')
 game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100" required></textarea>
                             </div>
+                            
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label class="input-label">Script Type</label>
+                                    <select id="scriptType" class="input-field">
+                                        <option value="normal">Normal Script</option>
+                                        <option value="pre-obfuscated">Pre-Obfuscated Script</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">Loader Obfuscation</label>
+                                    <select id="loaderObfuscation" class="input-field">
+                                        <option value="basic">Basic Protection</option>
+                                        <option value="advanced">Advanced Obfuscation</option>
+                                        <option value="extreme">Maximum Security</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="obfuscationOptions" class="result-box" style="margin-bottom: 1rem; display: none;">
+                                <div class="result-header">Obfuscation Settings</div>
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" id="vmProtection" checked>
+                                        <span>VM Protection (Recommended)</span>
+                                    </label>
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" id="antiDebug" checked>
+                                        <span>Anti-Debug Protection</span>
+                                    </label>
+                                </div>
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" id="stringEncryption">
+                                        <span>String Encryption</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
                             <button type="submit" class="submit-btn">Generate Protected Loader</button>
                         </div>
                     </form>
@@ -751,7 +792,7 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100" required></textarea
         }
 
         function redirectToLogin() {
-            window.location.href = '/index.html'; // or wherever your login page is
+            window.location.href = '/login.html'; // or wherever your login page is
         }
 
         // Logout function
@@ -776,6 +817,235 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100" required></textarea
             redirectToLogin();
         }
 
+        // Obfuscation functions
+        function basicObfuscation(code) {
+            // Simple variable name obfuscation and string encoding
+            const varMap = new Map();
+            let varCounter = 0;
+            
+            // Generate obfuscated variable names
+            function getObfuscatedVar(original) {
+                if (!varMap.has(original)) {
+                    const chars = 'IlO0_';
+                    let obfuscated = '';
+                    for (let i = 0; i < 8; i++) {
+                        obfuscated += chars[Math.floor(Math.random() * chars.length)];
+                    }
+                    varMap.set(original, obfuscated);
+                }
+                return varMap.get(original);
+            }
+            
+            // Basic string encoding
+            function encodeString(str) {
+                return str.split('').map(c => '\\' + c.charCodeAt(0)).join('');
+            }
+            
+            let obfuscated = code;
+            
+            // Add some junk comments
+            obfuscated = `-- Protected by LuaSeel\n${obfuscated}`;
+            
+            // Encode some strings (basic level)
+            obfuscated = obfuscated.replace(/"([^"]+)"/g, (match, str) => {
+                if (str.length < 20) { // Only encode shorter strings to avoid breaking functionality
+                    return `("${encodeString(str)}")`;
+                }
+                return match;
+            });
+            
+            return obfuscated;
+        }
+
+        function advancedObfuscation(code) {
+            // More sophisticated obfuscation
+            let obfuscated = code;
+            
+            // Add VM protection wrapper
+            const vmWrapper = `
+local function _0x${Math.random().toString(16).substr(2, 8)}()
+    local _ENV = getfenv()
+    local _0x${Math.random().toString(16).substr(2, 8)} = string
+    local _0x${Math.random().toString(16).substr(2, 8)} = loadstring
+    
+    -- Anti-debug check
+    local debug = debug or {}
+    if debug.getinfo or debug.traceback then
+        error("Debug detected")
+    end
+    
+    -- Original code wrapped
+    local _0xcode = [=[
+${code}
+]=]
+    
+    return _0x${Math.random().toString(16).substr(2, 8)}(_0xcode)()
+end
+
+return _0x${Math.random().toString(16).substr(2, 8)}()`;
+            
+            return vmWrapper;
+        }
+
+        function extremeObfuscation(code) {
+            // Maximum security obfuscation
+            const encoded = btoa(code); // Base64 encode the original code
+            const chunks = [];
+            
+            // Split encoded code into chunks
+            for (let i = 0; i < encoded.length; i += 10) {
+                chunks.push(encoded.substr(i, 10));
+            }
+            
+            // Generate random variable names
+            const vars = Array.from({length: chunks.length}, (_, i) => 
+                `_0x${Math.random().toString(16).substr(2, 8)}`
+            );
+            
+            const obfuscated = `
+-- LuaSeel Extreme Protection
+local _0xdecode = function(...)
+    local args = {...}
+    local result = ""
+    for i = 1, #args do
+        result = result .. args[i]
+    end
+    
+    -- Base64 decode function
+    local b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    local function base64_decode(data)
+        data = string.gsub(data, '[^'..b64chars..'=]', '')
+        return (data:gsub('.', function(x)
+            if (x == '=') then return '' end
+            local r,f='',(b64chars:find(x)-1)
+            for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
+            return r;
+        end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+            if (#x ~= 8) then return '' end
+            local c=0
+            for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
+            return string.char(c)
+        end))
+    end
+    
+    local decoded = base64_decode(result)
+    local func, err = loadstring(decoded)
+    if not func then
+        error("Decoding failed: " .. tostring(err))
+    end
+    return func()
+end
+
+-- Anti-tamper checks
+local _0xenv = getfenv()
+if _0xenv.debug or _0xenv.getfenv ~= getfenv then
+    error("Execution environment compromised")
+end
+
+-- Encrypted chunks
+${vars.map((v, i) => `local ${v} = "${chunks[i]}"`).join('\n')}
+
+-- Execute
+spawn(function()
+    _0xdecode(${vars.join(', ')})
+end)`;
+            
+            return obfuscated;
+        }
+
+        function applyObfuscation(code, level, options = {}) {
+            let obfuscated = code;
+            
+            // Apply selected obfuscation level
+            switch(level) {
+                case 'basic':
+                    obfuscated = basicObfuscation(code);
+                    break;
+                case 'advanced':
+                    obfuscated = advancedObfuscation(code);
+                    break;
+                case 'extreme':
+                    obfuscated = extremeObfuscation(code);
+                    break;
+                default:
+                    break;
+            }
+            
+            // Apply additional protections based on options
+            if (options.antiDebug) {
+                const antiDebugCode = `
+-- Anti-debug protection
+if debug and (debug.getinfo or debug.traceback or debug.getfenv) then
+    error("Debug interface detected")
+end
+
+if getfenv().debug then
+    error("Debug environment detected")
+end
+`;
+                obfuscated = antiDebugCode + obfuscated;
+            }
+            
+            if (options.vmProtection) {
+                obfuscated = `
+-- VM Protection
+local _0xvm = function()
+    local _0xoriginal = getfenv()
+    if not _0xoriginal then
+        error("Invalid execution environment")
+    end
+    
+    ${obfuscated}
+end
+
+return _0xvm()`;
+            }
+            
+            if (options.stringEncryption) {
+                // Simple string encryption for demonstration
+                obfuscated = obfuscated.replace(/["']([^"']+)["']/g, (match, str) => {
+                    const encrypted = str.split('').map(c => 
+                        String.fromCharCode(c.charCodeAt(0) + 3)
+                    ).join('');
+                    return `(function() local s="${encrypted}"; return s:gsub(".", function(c) return string.char(c:byte()-3) end) end)()`;
+                });
+            }
+            
+            return obfuscated;
+        }
+
+        // Event listeners for obfuscation options
+        document.getElementById('loaderObfuscation').addEventListener('change', function() {
+            const level = this.value;
+            const optionsDiv = document.getElementById('obfuscationOptions');
+            
+            if (level === 'advanced' || level === 'extreme') {
+                optionsDiv.style.display = 'block';
+            } else {
+                optionsDiv.style.display = 'none';
+            }
+        });
+
+        document.getElementById('scriptType').addEventListener('change', function() {
+            const type = this.value;
+            const textarea = document.querySelector('textarea[name="luaCode"]');
+            
+            if (type === 'pre-obfuscated') {
+                textarea.placeholder = `-- Your pre-obfuscated Lua script here
+-- Note: Pre-obfuscated scripts will be uploaded as-is
+-- Make sure your obfuscation is compatible with the execution environment
+
+local obfuscated_function = function()
+    -- Your obfuscated code here
+end
+obfuscated_function()`;
+            } else {
+                textarea.placeholder = `-- Your Lua script here
+print('Hello from LuaSeel!')
+game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100`;
+            }
+        });
+
         // Utility functions
         function generateId(length = 12) {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -784,6 +1054,344 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100" required></textarea
 
         function generateAPIKey() {
             return generateId(32);
+        }
+
+        // Create enhanced obfuscated loader with additional protection
+        function createEnhancedObfuscatedLoader(scriptId, apiKey, options = {}) {
+            const authKey = `${scriptId}_${apiKey}_fetch`;
+            const keyParts = [];
+            const chunkSize = 3;
+            
+            for (let i = 0; i < authKey.length; i += chunkSize) {
+                keyParts.push(authKey.substring(i, i + chunkSize));
+            }
+            
+            const dummyParts = Array.from({length: 15}, () => generateId(3));
+            const allParts = [...keyParts, ...dummyParts];
+            
+            // Shuffle more aggressively
+            for (let i = allParts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allParts[i], allParts[j]] = [allParts[j], allParts[i]];
+            }
+            
+            const realIndices = keyParts.map(part => allParts.indexOf(part) + 1);
+            
+            // Generate random function names for obfuscation
+            const funcNames = {
+                loader: `_0x${Math.random().toString(16).substr(2, 8)}`,
+                auth: `_0x${Math.random().toString(16).substr(2, 8)}`,
+                fetch: `_0x${Math.random().toString(16).substr(2, 8)}`,
+                exec: `_0x${Math.random().toString(16).substr(2, 8)}`,
+                verify: `_0x${Math.random().toString(16).substr(2, 8)}`
+            };
+            
+            let loaderCode = `-- LuaSeel Enhanced Protection ${options.obfuscation_level || 'Advanced'}
+local ${funcNames.loader} = {}
+local _0xparts = {}
+${allParts.map((part, index) => `_0xparts[${index + 1}] = "${part}"`).join('\n')}
+
+-- Obfuscated auth key reconstruction
+local function ${funcNames.auth}()
+    local _0xkey = ""
+    local _0xindices = {${realIndices.join(', ')}}
+    for _0xi = 1, #_0xindices do
+        local _0xidx = _0xindices[_0xi]
+        if _0xparts[_0xidx] then
+            _0xkey = _0xkey .. _0xparts[_0xidx]
+        else
+            error("Security breach detected: " .. tostring(_0xidx))
+        end
+    end
+    return _0xkey
+end`;
+
+            // Add anti-debug protection if enabled
+            if (options.anti_debug) {
+                loaderCode += `
+
+-- Enhanced Anti-Debug Protection
+local function ${funcNames.verify}()
+    local _0xenv = getfenv()
+    local _0xforbidden = {
+        "debug", "getfenv", "setfenv", "loadstring", "dofile", "loadfile"
+    }
+    
+    for _0xi = 1, #_0xforbidden do
+        if _0xenv[_0xforbidden[_0xi]] and _0xforbidden[_0xi] ~= "loadstring" then
+            error("Unauthorized debugging attempt detected")
+        end
+    end
+    
+    -- Check for debugging environments
+    if debug or (_0xenv.debug and type(_0xenv.debug) == "table") then
+        error("Debug interface detected")
+    end
+    
+    return true
+end`;
+            }
+
+            loaderCode += `
+
+-- Enhanced user data collection
+local function _0xgetUserData()
+    local _0xdata = {
+        timestamp = os.time(),
+        session = tostring(math.random(100000, 999999)),
+        loader_version = "enhanced_v2.1"
+    }
+    
+    if game then
+        _0xdata.env = "roblox"
+        _0xdata.game_id = game.GameId or 0
+        _0xdata.place_id = game.PlaceId or 0
+        _0xdata.job_id = game.JobId or "unknown"
+        
+        if game.Players and game.Players.LocalPlayer then
+            local _0xplayer = game.Players.LocalPlayer
+            _0xdata.player = {
+                name = _0xplayer.Name or "unknown",
+                user_id = _0xplayer.UserId or 0,
+                account_age = _0xplayer.AccountAge or 0,
+                membership = tostring(_0xplayer.MembershipType)
+            }
+        end
+        
+        -- Detect executor with more methods
+        _0xdata.executor = "unknown"
+        local _0xexecutors = {
+            "syn", "Synapse", "krnl", "KRNL", "ScriptWare", "Delta", 
+            "Fluxus", "Oxygen", "Sentinel", "ProtoSmasher", "Elysian"
+        }
+        
+        for _0xi = 1, #_0xexecutors do
+            local _0xexec = _0xexecutors[_0xi]
+            if _G[_0xexec] or (getgenv and getgenv()[_0xexec]) then
+                _0xdata.executor = _0xexec:lower()
+                break
+            end
+        end
+        
+        -- Additional executor detection
+        if _0xdata.executor == "unknown" then
+            if identifyexecutor then
+                _0xdata.executor = identifyexecutor() or "unknown"
+            elseif syn then
+                _0xdata.executor = "synapse"
+            elseif KRNL_LOADED then
+                _0xdata.executor = "krnl"
+            end
+        end
+    else
+        _0xdata.env = "lua_standalone"
+    end
+    
+    return _0xdata
+end
+
+-- Main fetch and execution function
+local function ${funcNames.fetch}()
+    ${options.anti_debug ? `${funcNames.verify}()` : '-- Security check bypassed'}
+    
+    local _0xauthKey = ${funcNames.auth}()
+    local _0xserverUrl = "https://luaseel.vercel.app/api/fetch/script"
+    local _0xuserData = _0xgetUserData()
+    
+    print("LuaSeel: Initializing secure connection...")
+    
+    local _0xrequestData = {
+        auth_key = _0xauthKey,
+        user_data = _0xuserData,
+        action = "fetch_script",
+        loader_type = "enhanced"
+    }
+    
+    local _0xsuccess, _0xresponse = pcall(function()
+        local _0xhttpService = game:GetService("HttpService")
+        local _0xjsonData = _0xhttpService:JSONEncode(_0xrequestData)
+        
+        -- Try multiple HTTP methods for compatibility
+        if request then
+            return request({
+                Url = _0xserverUrl,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json",
+                    ["User-Agent"] = "LuaSeel-Enhanced/2.1"
+                },
+                Body = _0xjsonData
+            })
+        elseif http_request then
+            return http_request({
+                Url = _0xserverUrl,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json",
+                    ["User-Agent"] = "LuaSeel-Enhanced/2.1"
+                },
+                Body = _0xjsonData
+            })
+        elseif syn and syn.request then
+            return syn.request({
+                Url = _0xserverUrl,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json",
+                    ["User-Agent"] = "LuaSeel-Enhanced/2.1"
+                },
+                Body = _0xjsonData
+            })
+        else
+            error("No compatible HTTP service found")
+        end
+    end)
+    
+    if not _0xsuccess or not _0xresponse then
+        error("Network connection failed: " .. tostring(_0xresponse))
+        return
+    end
+    
+    print("LuaSeel: Server response received (Status: " .. _0xresponse.StatusCode .. ")")
+    
+    if _0xresponse.StatusCode ~= 200 then
+        error("Server error " .. _0xresponse.StatusCode .. ": " .. (_0xresponse.Body or "Unknown error"))
+        return
+    end
+    
+    local _0xresponseData
+    _0xsuccess, _0xresponseData = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(_0xresponse.Body)
+    end)
+    
+    if not _0xsuccess or not _0xresponseData then
+        error("Invalid server response format")
+        return
+    end
+    
+    if _0xresponseData.success ~= true then
+        error("Authentication failed: " .. (_0xresponseData.message or "Access denied"))
+        return
+    end
+    
+    if _0xresponseData.script then
+        print("LuaSeel: Script authenticated and ready for execution...")
+        
+        -- Execute the script safely
+        local function ${funcNames.exec}()
+            local _0xscriptFunc, _0xloadError = loadstring(_0xresponseData.script)
+            if not _0xscriptFunc then
+                error("Script compilation error: " .. tostring(_0xloadError))
+                return
+            end
+            
+            ${options.vm_protection ? `
+            -- VM Protection wrapper
+            local _0xoriginalEnv = getfenv()
+            setfenv(_0xscriptFunc, _0xoriginalEnv)
+            ` : ''}
+            
+            local _0xexecSuccess, _0xexecError = pcall(_0xscriptFunc)
+            if not _0xexecSuccess then
+                warn("Script execution error: " .. tostring(_0xexecError))
+            else
+                print("LuaSeel: Script executed successfully")
+            end
+        end
+        
+        spawn(${funcNames.exec})
+    else
+        error("No script data received from server")
+    end
+end
+
+-- Initialize with delay for compatibility
+spawn(function()
+    wait(0.2)
+    ${funcNames.fetch}()
+end)
+
+-- Export loader functions
+${funcNames.loader}.load = ${funcNames.fetch}
+${funcNames.loader}.reload = ${funcNames.fetch}
+${funcNames.loader}.version = "enhanced_v2.1"
+
+return ${funcNames.loader}`;
+
+            return loaderCode;
+        }
+
+        // Show processed (obfuscated) code
+        function showProcessedCode(scriptId) {
+            const script = scripts[scriptId];
+            if (!script || !script.processed_code) {
+                alert('Processed code not found');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.8); z-index: 2000; display: flex; 
+                align-items: center; justify-content: center; padding: 2rem;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: rgba(255,255,255,0.05); 
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 16px; 
+                    padding: 2rem; 
+                    max-width: 90%; 
+                    max-height: 90%; 
+                    overflow: auto;
+                    backdrop-filter: blur(10px);
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="color: white; margin: 0;">Processed Code: ${script.name}</h3>
+                        <button onclick="this.closest('.modal').remove()" style="
+                            background: rgba(255,255,255,0.1); 
+                            border: none; 
+                            color: white; 
+                            padding: 0.5rem 1rem; 
+                            border-radius: 8px; 
+                            cursor: pointer;
+                        ">Close</button>
+                    </div>
+                    <div style="
+                        background: rgba(0,0,0,0.6); 
+                        border: 1px solid rgba(255,255,255,0.1);
+                        border-radius: 8px; 
+                        padding: 1.5rem; 
+                        font-family: monospace; 
+                        color: #fff; 
+                        font-size: 0.85rem; 
+                        white-space: pre-wrap; 
+                        overflow: auto; 
+                        max-height: 60vh;
+                    ">${script.processed_code}</div>
+                    <div style="margin-top: 1rem;">
+                        <button onclick="copyToClipboard('${script.processed_code.replace(/'/g, "\\'")}'); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy Processed Code', 1500)" style="
+                            background: linear-gradient(135deg, #ffffff, #cccccc);
+                            color: #000000;
+                            border: none;
+                            padding: 0.8rem 1.5rem;
+                            border-radius: 8px;
+                            font-weight: 600;
+                            cursor: pointer;
+                        ">Copy Processed Code</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         }
 
         // Create loader script without key printing
@@ -984,27 +1592,57 @@ return loader`;
             
             const formData = new FormData(e.target);
             const scriptName = formData.get('scriptName');
-            const luaCode = formData.get('luaCode');
+            let luaCode = formData.get('luaCode');
             const description = formData.get('description') || '';
+            
+            // Get obfuscation settings
+            const scriptType = document.getElementById('scriptType').value;
+            const loaderObfuscation = document.getElementById('loaderObfuscation').value;
+            const vmProtection = document.getElementById('vmProtection').checked;
+            const antiDebug = document.getElementById('antiDebug').checked;
+            const stringEncryption = document.getElementById('stringEncryption').checked;
             
             const scriptId = generateId(12);
             const apiKey = generateAPIKey();
             
             document.getElementById('uploadResult').innerHTML = `
                 <div class="result-box">
-                    <div class="result-header">Uploading to secure storage<span class="loading"></span></div>
-                    <div>Processing your script and generating protected loader...</div>
+                    <div class="result-header">Processing script<span class="loading"></span></div>
+                    <div>Applying ${loaderObfuscation} obfuscation and generating protected loader...</div>
                 </div>
             `;
             
             try {
+                // Apply obfuscation if it's a normal script
+                let processedCode = luaCode;
+                let obfuscationApplied = 'None (Pre-obfuscated)';
+                
+                if (scriptType === 'normal') {
+                    const obfuscationOptions = {
+                        vmProtection,
+                        antiDebug,
+                        stringEncryption
+                    };
+                    
+                    processedCode = applyObfuscation(luaCode, loaderObfuscation, obfuscationOptions);
+                    obfuscationApplied = loaderObfuscation.charAt(0).toUpperCase() + loaderObfuscation.slice(1);
+                }
+                
                 const response = await fetch('/api/fetch/script', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'upload_script',
                         session_token: sessionToken,
-                        script_data: { script_id: scriptId, api_key: apiKey, script_code: luaCode, script_name: scriptName, description }
+                        script_data: { 
+                            script_id: scriptId, 
+                            api_key: apiKey, 
+                            script_code: processedCode, 
+                            script_name: scriptName, 
+                            description,
+                            obfuscation_level: obfuscationApplied,
+                            script_type: scriptType
+                        }
                     })
                 });
 
@@ -1012,17 +1650,29 @@ return loader`;
                 if (!result.success) throw new Error(result.message || 'Upload failed');
 
                 scripts[scriptId] = {
-                    name: scriptName, code: luaCode, description, apiKey,
-                    created: new Date().toISOString(), id: scriptId
+                    name: scriptName, 
+                    code: luaCode, // Store original code locally
+                    processed_code: processedCode, // Store obfuscated version
+                    description, 
+                    apiKey,
+                    created: new Date().toISOString(), 
+                    id: scriptId,
+                    obfuscation: obfuscationApplied,
+                    script_type: scriptType
                 };
                 localStorage.setItem('luaSealScripts', JSON.stringify(scripts));
                 
-                const loaderCode = createObfuscatedLoader(scriptId, apiKey);
+                // Generate enhanced loader with obfuscation support
+                const loaderCode = createEnhancedObfuscatedLoader(scriptId, apiKey, {
+                    obfuscation_level: loaderObfuscation,
+                    vm_protection: vmProtection,
+                    anti_debug: antiDebug
+                });
                 
                 document.getElementById('uploadResult').innerHTML = `
                     <div class="result-box success">
                         <div class="result-header">Upload Complete!</div>
-                        <div>Your script has been securely uploaded and is ready for distribution.</div>
+                        <div>Your script has been securely uploaded with ${obfuscationApplied} protection.</div>
                     </div>
                     
                     <div class="info-cards">
@@ -1034,13 +1684,22 @@ return loader`;
                             <div class="info-card-label">Access Key</div>
                             <div class="info-card-value">${apiKey}</div>
                         </div>
+                        <div class="info-card">
+                            <div class="info-card-label">Protection Level</div>
+                            <div class="info-card-value">${obfuscationApplied}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-card-label">Script Type</div>
+                            <div class="info-card-value">${scriptType === 'normal' ? 'Auto-Obfuscated' : 'Pre-Obfuscated'}</div>
+                        </div>
                     </div>
                     
                     <div class="result-box">
                         <div class="result-header">Protected Loader Script</div>
-                        <div>Share this script instead of your original code:</div>
+                        <div>Share this enhanced loader instead of your original code:</div>
                         <div class="code-display">${loaderCode}</div>
                         <button class="icon-btn" onclick="copyToClipboard('${loaderCode.replace(/'/g, "\\'")}')">Copy Loader</button>
+                        <button class="icon-btn" onclick="showProcessedCode('${scriptId}')" style="margin-left: 0.5rem;">View Processed Code</button>
                     </div>
                 `;
                 
@@ -1144,7 +1803,7 @@ return loader`;
                 scriptList.innerHTML = `
                     <div class="result-box">
                         <div class="result-header">No Scripts Yet</div>
-                        <div>Upload your first script to get started.</div>
+                        <div>Upload your first script to get started with obfuscation protection.</div>
                     </div>
                 `;
                 return;
@@ -1152,24 +1811,184 @@ return loader`;
             
             let html = '';
             for (const [id, script] of Object.entries(scripts)) {
+                const obfuscationBadge = script.obfuscation ? 
+                    `<span style="
+                        background: rgba(34, 197, 94, 0.1); 
+                        border: 1px solid rgba(34, 197, 94, 0.3); 
+                        color: #22c55e; 
+                        padding: 0.2rem 0.5rem; 
+                        border-radius: 4px; 
+                        font-size: 0.7rem; 
+                        margin-left: 0.5rem;
+                    ">${script.obfuscation}</span>` : '';
+                
+                const scriptTypeBadge = script.script_type === 'pre-obfuscated' ?
+                    `<span style="
+                        background: rgba(168, 85, 247, 0.1); 
+                        border: 1px solid rgba(168, 85, 247, 0.3); 
+                        color: #a855f7; 
+                        padding: 0.2rem 0.5rem; 
+                        border-radius: 4px; 
+                        font-size: 0.7rem; 
+                        margin-left: 0.5rem;
+                    ">Pre-Obfuscated</span>` : '';
+                
                 html += `
                     <div class="script-card">
                         <div class="script-card-header">
                             <div>
-                                <div class="script-name">${script.name}</div>
-                                <div class="script-meta">${id} • ${script.code.length} chars • ${new Date(script.created).toLocaleDateString()}</div>
+                                <div class="script-name">
+                                    ${script.name}
+                                    ${obfuscationBadge}
+                                    ${scriptTypeBadge}
+                                </div>
+                                <div class="script-meta">
+                                    ${id} • ${script.code.length} chars • ${new Date(script.created).toLocaleDateString()}
+                                </div>
                             </div>
                             <div class="script-actions">
                                 <button class="icon-btn" onclick="copyToClipboard('${id}')">Copy ID</button>
                                 <button class="icon-btn" onclick="copyToClipboard('${script.apiKey}')">Copy Key</button>
+                                ${script.processed_code ? `<button class="icon-btn" onclick="showProcessedCode('${id}')">View Obfuscated</button>` : ''}
+                                <button class="icon-btn" onclick="generateNewLoader('${id}')">New Loader</button>
                                 <button class="icon-btn" onclick="deleteScript('${id}')">Delete</button>
                             </div>
                         </div>
                         <div class="script-description">${script.description || 'No description'}</div>
+                        ${script.obfuscation ? `
+                            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #888;">
+                                Protection: ${script.obfuscation} • Type: ${script.script_type || 'normal'}
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }
             scriptList.innerHTML = html;
+        }
+
+        // Generate new loader for existing script
+        function generateNewLoader(scriptId) {
+            const script = scripts[scriptId];
+            if (!script) {
+                alert('Script not found');
+                return;
+            }
+            
+            // Create modal for loader options
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.8); z-index: 2000; display: flex; 
+                align-items: center; justify-content: center; padding: 2rem;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: rgba(255,255,255,0.05); 
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 16px; 
+                    padding: 2rem; 
+                    max-width: 500px; 
+                    backdrop-filter: blur(10px);
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="color: white; margin: 0;">Generate New Loader</h3>
+                        <button onclick="this.closest('.modal').remove()" style="
+                            background: rgba(255,255,255,0.1); 
+                            border: none; 
+                            color: white; 
+                            padding: 0.5rem 1rem; 
+                            border-radius: 8px; 
+                            cursor: pointer;
+                        ">Close</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="color: #ccc; display: block; margin-bottom: 0.5rem;">Loader Protection Level</label>
+                        <select id="newLoaderLevel" style="
+                            width: 100%; 
+                            padding: 0.8rem; 
+                            background: rgba(0,0,0,0.3); 
+                            border: 1px solid rgba(255,255,255,0.2); 
+                            border-radius: 8px; 
+                            color: white;
+                        ">
+                            <option value="basic">Basic Protection</option>
+                            <option value="advanced" selected>Advanced Obfuscation</option>
+                            <option value="extreme">Maximum Security</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="color: #ccc; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="newVmProtection" checked>
+                            <span>VM Protection</span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="color: #ccc; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="newAntiDebug" checked>
+                            <span>Anti-Debug Protection</span>
+                        </label>
+                    </div>
+                    
+                    <button onclick="generateLoaderWithOptions('${scriptId}')" style="
+                        background: linear-gradient(135deg, #ffffff, #cccccc);
+                        color: #000000;
+                        border: none;
+                        padding: 1rem 2rem;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        width: 100%;
+                    ">Generate Enhanced Loader</button>
+                    
+                    <div id="newLoaderResult" style="margin-top: 1rem;"></div>
+                </div>
+            `;
+            
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+
+        // Generate loader with custom options
+        function generateLoaderWithOptions(scriptId) {
+            const script = scripts[scriptId];
+            const level = document.getElementById('newLoaderLevel').value;
+            const vmProtection = document.getElementById('newVmProtection').checked;
+            const antiDebug = document.getElementById('newAntiDebug').checked;
+            
+            const options = {
+                obfuscation_level: level,
+                vm_protection: vmProtection,
+                anti_debug: antiDebug
+            };
+            
+            const loaderCode = createEnhancedObfuscatedLoader(scriptId, script.apiKey, options);
+            
+            document.getElementById('newLoaderResult').innerHTML = `
+                <div style="
+                    background: rgba(34, 197, 94, 0.1); 
+                    border: 1px solid rgba(34, 197, 94, 0.3); 
+                    border-radius: 8px; 
+                    padding: 1rem; 
+                    margin-top: 1rem;
+                    color: #4ade80;
+                ">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">Loader Generated!</div>
+                    <div style="font-size: 0.9rem;">Protection: ${level} • VM: ${vmProtection ? 'Yes' : 'No'} • Anti-Debug: ${antiDebug ? 'Yes' : 'No'}</div>
+                    <button onclick="copyToClipboard('${loaderCode.replace(/'/g, "\\'")}'); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy Loader', 1500)" style="
+                        background: rgba(255,255,255,0.1);
+                        border: 1px solid rgba(255,255,255,0.2);
+                        color: white;
+                        padding: 0.5rem 1rem;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        margin-top: 0.5rem;
+                    ">Copy Loader</button>
+                </div>
+            `;
         }
 
         // Utility functions
