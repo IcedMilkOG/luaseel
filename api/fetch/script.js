@@ -160,11 +160,7 @@ export default async function handler(req, res) {
           console.log('❌ User not found in blob storage:', username);
           return res.status(401).json({
             success: false,
-            message: 'Invalid credentials',
-            debug: {
-              username_searched: username,
-              blobs_found: 0
-            }
+            message: 'Invalid credentials'
           });
         }
 
@@ -207,11 +203,7 @@ export default async function handler(req, res) {
           console.log('❌ Password verification failed for user:', username);
           return res.status(401).json({
             success: false,
-            message: 'Invalid credentials',
-            debug: {
-              username: username,
-              password_check: 'failed'
-            }
+            message: 'Invalid credentials'
           });
         }
       } catch (error) {
@@ -224,77 +216,258 @@ export default async function handler(req, res) {
       }
     }
 
-    // Debug endpoint to check admin status
-    if (action === 'debug_admin') {
+    // User registration with access code
+    if (action === 'register_user') {
+      const { username, password, access_code } = req.body;
+      
+      if (!username || !password || !access_code) {
+        return res.status(400).json({
+          success: false,
+          message: 'Username, password, and access code required'
+        });
+      }
+
+      // Basic validation
+      if (username.length < 3) {
+        return res.status(400).json({
+          success: false,
+          message: 'Username must be at least 3 characters'
+        });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 6 characters'
+        });
+      }
+
       try {
-        const userBlobs = await list({ prefix: 'users/daveblunts' });
-        const credentialBlobs = await list({ prefix: 'config/admin-credentials' });
-        
-        let userExists = userBlobs.blobs.length > 0;
-        let credentialsExist = credentialBlobs.blobs.length > 0;
-        let userData = null;
-        let credentialData = null;
-        
-        if (userExists) {
-          const userResponse = await fetch(userBlobs.blobs[0].url);
-          userData = await userResponse.json();
+        // Verify access code
+        const codeBlobs = await list({ prefix: `access-codes/${access_code}` });
+        if (codeBlobs.blobs.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid access code'
+          });
         }
-        
-        if (credentialsExist) {
-          const credResponse = await fetch(credentialBlobs.blobs[0].url);
-          credentialData = await credResponse.json();
+
+        const codeResponse = await fetch(codeBlobs.blobs[0].url);
+        const codeData = await codeResponse.json();
+
+        // Check if code is still valid
+        if (codeData.used) {
+          return res.status(400).json({
+            success: false,
+            message: 'Access code already used'
+          });
         }
+
+        if (new Date() > new Date(codeData.expires)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Access code expired'
+          });
+        }
+
+        // Check if user already exists
+        const existingUser = await list({ prefix: `users/${username}` });
+        if (existingUser.blobs.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Username already taken'
+          });
+        }
+
+        // Create user
+        const newUser = {
+          username: username,
+          password: hashPassword(password),
+          role: 'user',
+          created: new Date().toISOString(),
+          registered_with_code: access_code
+        };
+
+        await put(`users/${username}.json`, JSON.stringify(newUser), { access: 'public' });
+        
+        // Mark access code as used
+        codeData.used = true;
+        codeData.used_by = username;
+        codeData.used_at = new Date().toISOString();
+        await put(`access-codes/${access_code}.json`, JSON.stringify(codeData), { access: 'public' });
+        
+        console.log('✓ User registered:', username, 'with code:', access_code);
         
         return res.status(200).json({
           success: true,
-          debug: {
-            user_exists: userExists,
-            credentials_exist: credentialsExist,
-            user_data: userData ? {
-              username: userData.username,
-              role: userData.role,
-              created: userData.created,
-              has_password: !!userData.password
-            } : null,
-            credential_data: credentialData ? {
-              username: credentialData.username,
-              has_password: !!credentialData.password,
-              created: credentialData.created
-            } : null
-          }
+          message: 'Account created successfully',
+          username: username
         });
       } catch (error) {
+        console.error('Registration error:', error);
         return res.status(500).json({
           success: false,
-          message: 'Debug failed',
-          error: error.message
+          message: 'Registration failed'
         });
       }
     }
 
-    // Force admin reset endpoint (for debugging)
-    if (action === 'reset_admin') {
+    // Generate access code (admin only)
+    if (action === 'generate_access_code') {
+      const { session_token, valid_days } = req.body;
+      
+      const session = activeSessions.get(session_token);
+      if (!session || session.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin access required'
+        });
+      }
+
       try {
-        console.log('🔄 Forcing admin reset...');
+        const accessCode = 'RAC-' + generateSessionToken().substring(0, 10).toUpperCase();
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + (valid_days || 30));
+
+        const codeData = {
+          code: accessCode,
+          created: new Date().toISOString(),
+          expires: expiryDate.toISOString(),
+          valid_days: valid_days || 30,
+          used: false,
+          created_by: session.username
+        };
+
+        await put(`access-codes/${accessCode}.json`, JSON.stringify(codeData), { access: 'public' });
         
-        // Delete existing admin user
-        const userBlobs = await list({ prefix: 'users/daveblunts' });
-        // Note: Vercel blob doesn't have a delete API in the basic package
-        // You would need to manually delete or let it expire
-        
-        // Reinitialize admin
-        const result = await initializeAdmin();
+        console.log('✓ Access code generated:', accessCode, 'by', session.username);
         
         return res.status(200).json({
           success: true,
-          message: 'Admin reset completed',
-          result: result
+          message: 'Access code generated',
+          access_code: accessCode,
+          expires: expiryDate.toISOString()
         });
       } catch (error) {
+        console.error('Generate access code error:', error);
         return res.status(500).json({
           success: false,
-          message: 'Admin reset failed',
-          error: error.message
+          message: 'Failed to generate access code'
+        });
+      }
+    }
+
+    // List access codes (admin only)
+    if (action === 'list_access_codes') {
+      const { session_token } = req.body;
+      
+      const session = activeSessions.get(session_token);
+      if (!session || session.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin access required'
+        });
+      }
+
+      try {
+        const codeBlobs = await list({ prefix: 'access-codes/', limit: 100 });
+        const codes = [];
+
+        for (const blob of codeBlobs.blobs) {
+          try {
+            const response = await fetch(blob.url);
+            const codeData = await response.json();
+            
+            codes.push({
+              code: codeData.code,
+              status: codeData.used ? 'Used' : 'Available',
+              expires: new Date(codeData.expires).toLocaleDateString(),
+              created: new Date(codeData.created).toLocaleDateString(),
+              used_by: codeData.used_by || null
+            });
+          } catch (error) {
+            console.error('Error reading code data:', error);
+          }
+        }
+
+        // Sort by creation date (newest first)
+        codes.sort((a, b) => new Date(b.created) - new Date(a.created));
+
+        return res.status(200).json({
+          success: true,
+          codes: codes,
+          total: codes.length
+        });
+      } catch (error) {
+        console.error('List access codes error:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to list access codes'
+        });
+      }
+    }
+
+    // List users (admin only)
+    if (action === 'list_users') {
+      const { session_token } = req.body;
+      
+      const session = activeSessions.get(session_token);
+      if (!session || session.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin access required'
+        });
+      }
+
+      try {
+        const userBlobs = await list({ prefix: 'users/', limit: 100 });
+        const users = [];
+
+        for (const blob of userBlobs.blobs) {
+          try {
+            const response = await fetch(blob.url);
+            const userData = await response.json();
+            
+            // Count user's scripts
+            const scriptBlobs = await list({ prefix: 'meta/' });
+            let scriptCount = 0;
+            
+            for (const scriptBlob of scriptBlobs.blobs) {
+              try {
+                const scriptResponse = await fetch(scriptBlob.url);
+                const scriptData = await scriptResponse.json();
+                if (scriptData.uploaded_by === userData.username) {
+                  scriptCount++;
+                }
+              } catch (error) {
+                // Skip if can't read script metadata
+              }
+            }
+            
+            users.push({
+              username: userData.username,
+              role: userData.role,
+              created: new Date(userData.created).toLocaleDateString(),
+              scripts: scriptCount
+            });
+          } catch (error) {
+            console.error('Error reading user data:', error);
+          }
+        }
+
+        // Sort by creation date (newest first)
+        users.sort((a, b) => new Date(b.created) - new Date(a.created));
+
+        return res.status(200).json({
+          success: true,
+          users: users,
+          total: users.length
+        });
+      } catch (error) {
+        console.error('List users error:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to list users'
         });
       }
     }
