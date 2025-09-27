@@ -797,6 +797,7 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
         async function checkAuthentication() {
             const stored = localStorage.getItem('luaseel_session');
             if (!stored) {
+                console.log('No session found, redirecting to login');
                 redirectToLogin();
                 return false;
             }
@@ -804,6 +805,7 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
             const session = JSON.parse(stored);
             
             try {
+                console.log('Verifying session with server...');
                 const response = await fetch('/api/fetch/script', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -814,28 +816,43 @@ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
                 });
                 
                 const result = await response.json();
+                console.log('Session verification result:', result);
                 
                 if (result.success && result.valid) {
                     sessionToken = session.token;
                     currentUser = { username: result.username, role: result.role };
                     
                     document.getElementById('userDisplay').textContent = `${result.username} (${result.role})`;
+                    console.log('Authentication successful for:', result.username);
                     
                     return true;
                 } else {
+                    console.log('Session invalid, clearing and redirecting');
                     localStorage.removeItem('luaseel_session');
                     redirectToLogin();
                     return false;
                 }
             } catch (error) {
                 console.error('Authentication check failed:', error);
+                alert('Authentication check failed. Please try logging in again.');
                 redirectToLogin();
                 return false;
             }
         }
 
         function redirectToLogin() {
-            window.location.href = '/login.html'; // or wherever your login page is
+            // Try different possible login page locations
+            const possiblePaths = [
+                '/login.html',
+                '/index.html', 
+                '/',
+                window.location.origin + '/login.html',
+                window.location.origin + '/'
+            ];
+            
+            // Use the first path for now, but user can modify as needed
+            console.log('Redirecting to login page...');
+            window.location.href = possiblePaths[0];
         }
 
         // Logout function
