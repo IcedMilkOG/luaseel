@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LuaSeel - Login</title>
+    <title>LuaSeel - Script Hosting Platform</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
         
@@ -18,13 +18,10 @@
             background: #0a0a0a;
             color: #ffffff;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
-        /* Animated Background */
+        /* Particle Background */
         #particles {
             position: fixed;
             top: 0;
@@ -38,186 +35,78 @@
             position: absolute;
             width: 2px;
             height: 2px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.3);
             border-radius: 50%;
-            animation: float 12s infinite ease-in-out;
+            animation: float 8s infinite ease-in-out;
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.2; }
-            25% { transform: translateY(-40px) translateX(15px) scale(1.3); opacity: 0.6; }
-            50% { transform: translateY(-80px) translateX(-20px) scale(0.7); opacity: 1; }
-            75% { transform: translateY(-40px) translateX(25px) scale(1.1); opacity: 0.4; }
+            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.3; }
+            25% { transform: translateY(-30px) translateX(10px) scale(1.2); opacity: 0.7; }
+            50% { transform: translateY(-60px) translateX(-15px) scale(0.8); opacity: 1; }
+            75% { transform: translateY(-30px) translateX(20px) scale(1.1); opacity: 0.5; }
         }
 
+        /* Geometric shapes floating */
         .geo-shape {
             position: fixed;
-            border: 1px solid rgba(255,255,255,0.08);
-            animation: rotate 25s linear infinite;
-            z-index: -1;
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: rotate 20s linear infinite;
         }
 
         .geo-shape.triangle {
             width: 0;
             height: 0;
-            border-left: 12px solid transparent;
-            border-right: 12px solid transparent;
-            border-bottom: 20px solid rgba(255,255,255,0.03);
-            border-radius: 2px;
-        }
-
-        .geo-shape.square {
-            width: 16px;
-            height: 16px;
-            background: rgba(255,255,255,0.02);
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 25px solid rgba(255,255,255,0.05);
             border-radius: 3px;
         }
 
-        .geo-shape.circle {
-            width: 14px;
-            height: 14px;
+        .geo-shape.square {
+            width: 20px;
+            height: 20px;
             background: rgba(255,255,255,0.03);
+            border-radius: 4px;
+        }
+
+        .geo-shape.circle {
+            width: 18px;
+            height: 18px;
+            background: rgba(255,255,255,0.04);
             border-radius: 50%;
         }
 
         @keyframes rotate {
-            0% { transform: rotate(0deg) translateY(0px); opacity: 0.1; }
-            50% { opacity: 0.6; }
-            100% { transform: rotate(360deg) translateY(-30px); opacity: 0.1; }
+            0% { transform: rotate(0deg) translateY(0px); opacity: 0.2; }
+            50% { opacity: 0.8; }
+            100% { transform: rotate(360deg) translateY(-20px); opacity: 0.2; }
         }
 
-        /* Login Container */
-        .login-container {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 3rem;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 420px;
-            position: relative;
+            height: 100%;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
         }
 
-        .login-container::before {
-            content: '';
-            position: absolute;
-            top: -1px;
-            left: -1px;
-            right: -1px;
-            bottom: -1px;
-            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05), rgba(255,255,255,0.1));
-            border-radius: 20px;
-            z-index: -1;
-        }
-
-        .logo-section {
-            text-align: center;
-            margin-bottom: 2.5rem;
-        }
-
-        .logo {
-            font-size: 2.5rem;
-            font-weight: 700;
+        .loading-text {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
             background: linear-gradient(135deg, #ffffff, #888);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
         }
 
-        .login-subtitle {
-            color: #888;
-            font-size: 0.9rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 0.9rem;
-            color: #cccccc;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 1rem 1.2rem;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px;
-            color: #ffffff;
-            font-family: inherit;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: rgba(255,255,255,0.4);
-            background: rgba(0,0,0,0.5);
-            box-shadow: 0 0 0 3px rgba(255,255,255,0.05);
-        }
-
-        .form-input::placeholder {
-            color: #666;
-        }
-
-        .login-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #ffffff, #cccccc);
-            color: #000000;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: inherit;
-            margin-bottom: 1.5rem;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(255,255,255,0.2);
-        }
-
-        .login-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            color: #ff6b6b;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
-        .success-message {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            color: #4ade80;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
-        .loading {
-            position: relative;
-        }
-
-        .loading::after {
+        .loading-dots::after {
             content: '';
             animation: loading-dots 1.5s infinite;
         }
@@ -228,26 +117,203 @@
             66% { content: '...'; }
         }
 
-        .admin-section {
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 1.5rem;
-            margin-top: 1.5rem;
+        /* Main Layout */
+        .workspace {
+            min-height: 100vh;
+            padding: 2rem;
+            display: grid;
+            grid-template-areas: 
+                "header header header"
+                "nav main sidebar";
+            grid-template-columns: 280px 1fr 300px;
+            grid-template-rows: auto 1fr;
+            gap: 2rem;
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
 
-        .admin-title {
+        .workspace.loaded {
+            opacity: 1;
+        }
+
+        /* Header */
+        .header {
+            grid-area: header;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            padding: 0.5rem 1rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #22c55e;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Navigation Panel */
+        .nav-panel {
+            grid-area: nav;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: #cccccc;
+            font-family: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 0.8rem;
+            text-align: left;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.2);
+            color: #ffffff;
+        }
+
+        .nav-item.active {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.3);
+            color: #ffffff;
+        }
+
+        /* Main Content */
+        .main-content {
+            grid-area: main;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 2.5rem;
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .content-panel {
+            display: none;
+        }
+
+        .content-panel.active {
+            display: block;
+        }
+
+        .panel-header {
+            margin-bottom: 2rem;
+        }
+
+        .panel-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .panel-subtitle {
+            color: #888;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            grid-area: sidebar;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .widget {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .widget-title {
             font-size: 1rem;
             font-weight: 600;
             margin-bottom: 1rem;
             color: #ffffff;
-            text-align: center;
         }
 
-        .create-user-form {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-top: 1rem;
+        .widget-content {
+            color: #cccccc;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Forms */
+        .form-container {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 1.5rem;
         }
 
         .form-row {
@@ -256,47 +322,213 @@
             gap: 1rem;
         }
 
-        .secondary-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #ffffff;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
             font-size: 0.9rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #ffffff;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.4);
+            background: rgba(0,0,0,0.5);
+        }
+
+        .input-field.textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #ffffff, #cccccc);
+            color: #000000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             font-family: inherit;
         }
 
-        .secondary-btn:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,255,255,0.2);
         }
 
-        .role-select {
-            width: 100%;
-            padding: 1rem 1.2rem;
-            background: rgba(0,0,0,0.3);
+        .icon-btn {
+            background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px;
             color: #ffffff;
-            font-family: inherit;
-            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .role-select option {
-            background: #0a0a0a;
-            color: #ffffff;
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.1);
         }
 
-        @media (max-width: 480px) {
-            .login-container {
-                margin: 1rem;
-                padding: 2rem;
+        /* Result Panels */
+        .result-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .result-box.success {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .result-box.error {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .result-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .code-display {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin: 1rem 0;
+        }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .info-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .info-card-label {
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-card-value {
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        /* Script Cards */
+        .script-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .script-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .script-card:hover {
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .script-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .script-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .script-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .script-meta {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .script-description {
+            color: #cccccc;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .workspace {
+                grid-template-areas: 
+                    "header header"
+                    "nav main";
+                grid-template-columns: 280px 1fr;
             }
             
-            .logo {
-                font-size: 2rem;
+            .sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .workspace {
+                grid-template-areas: 
+                    "header"
+                    "nav"
+                    "main";
+                grid-template-columns: 1fr;
+                padding: 1rem;
+                gap: 1rem;
+            }
+            
+            .nav-panel {
+                padding: 1.5rem;
+            }
+            
+            .main-content {
+                padding: 1.5rem;
             }
             
             .form-row {
@@ -308,62 +540,140 @@
 <body>
     <div id="particles"></div>
     
-    <div class="login-container">
-        <div class="logo-section">
-            <div class="logo">LuaSeel</div>
-            <div class="login-subtitle">Secure Script Hosting Platform</div>
-        </div>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-text">LuaSeel</div>
+        <div class="loading-text loading-dots">Authenticating</div>
+    </div>
 
-        <div id="loginSection">
-            <form id="loginForm">
-                <div class="form-group">
-                    <label class="form-label">Username</label>
-                    <input type="text" id="username" class="form-input" placeholder="Enter your username" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
-                </div>
-                
-                <button type="submit" id="loginBtn" class="login-btn">Sign In</button>
-            </form>
-            
-            <div id="loginMessage"></div>
-        </div>
-
-        <div id="adminSection" style="display: none;" class="admin-section">
-            <div class="admin-title">Admin Panel</div>
-            
-            <div class="create-user-form">
-                <form id="createUserForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">New Username</label>
-                            <input type="text" id="newUsername" class="form-input" placeholder="Username" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Role</label>
-                            <select id="newUserRole" class="role-select">
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input type="password" id="newPassword" class="form-input" placeholder="New user password" required>
-                    </div>
-                    
-                    <button type="submit" class="secondary-btn">Create User</button>
-                </form>
-                
-                <div id="createUserMessage"></div>
+    <div id="workspace" class="workspace">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-section">
+                <div class="logo">LuaSeel</div>
             </div>
-            
-            <div style="text-align: center; margin-top: 1.5rem;">
-                <button id="proceedBtn" class="login-btn">Access LuaSeel Platform</button>
+            <div class="user-info">
+                <div class="status-indicator">Authenticated</div>
+                <span id="userDisplay">Loading...</span>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-panel">
+            <div class="nav-title">Script Manager</div>
+            <button class="nav-item active" onclick="switchPanel('upload')">
+                Upload New Script
+            </button>
+            <button class="nav-item" onclick="switchPanel('access')">
+                Retrieve Script
+            </button>
+            <button class="nav-item" onclick="switchPanel('manage')">
+                Manage Collection
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Upload Panel -->
+            <div id="upload" class="content-panel active">
+                <div class="panel-header">
+                    <h1 class="panel-title">Upload Script</h1>
+                    <p class="panel-subtitle">Securely store your Lua script and generate a protected loader for safe distribution</p>
+                </div>
+
+                <div class="form-container">
+                    <form id="uploadForm">
+                        <div class="form-grid">
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label class="input-label">Script Name</label>
+                                    <input type="text" name="scriptName" class="input-field" placeholder="My Awesome Script" required>
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">Description</label>
+                                    <input type="text" name="description" class="input-field" placeholder="What does this script do?">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Lua Source Code</label>
+                                <textarea name="luaCode" class="input-field textarea" placeholder="-- Your Lua script here
+print('Hello from LuaSeel!')
+game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100" required></textarea>
+                            </div>
+                            <button type="submit" class="submit-btn">Generate Protected Loader</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="uploadResult"></div>
+            </div>
+
+            <!-- Access Panel -->
+            <div id="access" class="content-panel">
+                <div class="panel-header">
+                    <h1 class="panel-title">Retrieve Script</h1>
+                    <p class="panel-subtitle">Access your original script source code using the script ID and access key</p>
+                </div>
+
+                <div class="form-container">
+                    <form id="accessForm">
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label class="input-label">Script ID</label>
+                                <input type="text" name="scriptId" class="input-field" placeholder="Script identifier" required>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Access Key</label>
+                                <input type="text" name="apiKey" class="input-field" placeholder="Access key" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="submit-btn">Retrieve Script</button>
+                    </form>
+                </div>
+
+                <div id="accessResult"></div>
+            </div>
+
+            <!-- Manage Panel -->
+            <div id="manage" class="content-panel">
+                <div class="panel-header">
+                    <h1 class="panel-title">Script Collection</h1>
+                    <p class="panel-subtitle">View and manage all your uploaded scripts from this browser</p>
+                </div>
+
+                <div id="scriptList" class="script-grid"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="widget">
+                <div class="widget-title">Security Features</div>
+                <div class="widget-content">
+                    • Scripts encrypted in cloud storage<br>
+                    • Obfuscated loader generation<br>
+                    • Access key authentication<br>
+                    • Real-time analytics tracking
+                </div>
+            </div>
+
+            <div class="widget">
+                <div class="widget-title">How It Works</div>
+                <div class="widget-content">
+                    Upload your script → Get a protected loader → Share the loader → Original code stays hidden and secure
+                </div>
+            </div>
+
+            <div class="widget">
+                <div class="widget-title">Recent Activity</div>
+                <div class="widget-content">
+                    <div style="font-size: 0.8rem; color: #666;">
+                        • Session authenticated<br>
+                        • Platform ready<br>
+                        • System status: Operational
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -371,335 +681,537 @@
     <script>
         let sessionToken = null;
         let currentUser = null;
+        let scripts = JSON.parse(localStorage.getItem('luaSealScripts')) || {};
 
-        // Initialize particles
+        // Initialize particles and shapes
         function createParticles() {
             const container = document.getElementById('particles');
             
             // Create floating particles
-            for (let i = 0; i < 40; i++) {
+            for (let i = 0; i < 50; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
                 particle.style.left = Math.random() * 100 + '%';
                 particle.style.top = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 12 + 's';
+                particle.style.animationDelay = Math.random() * 8 + 's';
                 container.appendChild(particle);
             }
             
             // Create geometric shapes
             const shapes = ['triangle', 'square', 'circle'];
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < 15; i++) {
                 const shape = document.createElement('div');
                 shape.className = 'geo-shape ' + shapes[Math.floor(Math.random() * shapes.length)];
                 shape.style.left = Math.random() * 100 + '%';
                 shape.style.top = Math.random() * 100 + '%';
-                shape.style.animationDelay = Math.random() * 25 + 's';
+                shape.style.animationDelay = Math.random() * 20 + 's';
                 container.appendChild(shape);
             }
         }
 
-        // Show message
-        function showMessage(elementId, message, isError = false) {
-            const element = document.getElementById(elementId);
-            element.innerHTML = `
-                <div class="${isError ? 'error-message' : 'success-message'}">
-                    ${message}
-                </div>
-            `;
-            
-            setTimeout(() => {
-                element.innerHTML = '';
-            }, 5000);
-        }
-
-        // Check existing session
-        async function checkSession() {
+        // Check authentication
+        async function checkAuthentication() {
             const stored = localStorage.getItem('luaseel_session');
-            if (stored) {
-                const session = JSON.parse(stored);
-                
-                try {
-                    const response = await fetch('/api/fetch/script', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'verify_session',
-                            session_token: session.token
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success && result.valid) {
-                        sessionToken = session.token;
-                        currentUser = { username: result.username, role: result.role };
-                        
-                        if (result.role === 'admin') {
-                            showAdminPanel();
-                        } else {
-                            redirectToApp();
-                        }
-                        return true;
-                    }
-                } catch (error) {
-                    console.error('Session check failed:', error);
-                }
-                
-                // Clear invalid session
-                localStorage.removeItem('luaseel_session');
+            if (!stored) {
+                window.location.href = '/index.html';
+                return false;
             }
-            return false;
-        }
 
-        // Login form handler
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
-            
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = 'Signing in<span class="loading"></span>';
+            const session = JSON.parse(stored);
             
             try {
                 const response = await fetch('/api/fetch/script', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        action: 'login',
-                        username,
-                        password
+                        action: 'verify_session',
+                        session_token: session.token
                     })
                 });
                 
                 const result = await response.json();
                 
-                if (result.success) {
-                    sessionToken = result.session_token;
+                if (result.success && result.valid) {
+                    sessionToken = session.token;
                     currentUser = { username: result.username, role: result.role };
                     
-                    // Store session
-                    localStorage.setItem('luaseel_session', JSON.stringify({
-                        token: sessionToken,
-                        username: result.username,
-                        role: result.role,
-                        created: Date.now()
-                    }));
+                    document.getElementById('userDisplay').textContent = `${result.username} (${result.role})`;
                     
-                    showMessage('loginMessage', `Welcome back, ${result.username}!`);
-                    
-                    if (result.role === 'admin') {
-                        setTimeout(() => showAdminPanel(), 1000);
-                    } else {
-                        setTimeout(() => redirectToApp(), 1500);
-                    }
+                    return true;
                 } else {
-                    showMessage('loginMessage', result.message, true);
+                    localStorage.removeItem('luaseel_session');
+                    window.location.href = '/index.html';
+                    return false;
                 }
             } catch (error) {
-                showMessage('loginMessage', 'Connection failed. Please try again.', true);
-                console.error('Login error:', error);
+                console.error('Authentication check failed:', error);
+                window.location.href = '/index.html';
+                return false;
             }
-            
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = 'Sign In';
-        });
-
-        // Show admin panel
-        function showAdminPanel() {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('adminSection').style.display = 'block';
-        }
-
-        // Create user form handler
-        document.getElementById('createUserForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const newUsername = document.getElementById('newUsername').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const newUserRole = document.getElementById('newUserRole').value;
-            
-            try {
-                const response = await fetch('/api/fetch/script', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'create_user',
-                        session_token: sessionToken,
-                        new_username: newUsername,
-                        new_password: newPassword,
-                        new_role: newUserRole
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showMessage('createUserMessage', `User "${result.username}" created successfully with role: ${result.role}`);
-                    document.getElementById('createUserForm').reset();
-                } else {
-                    showMessage('createUserMessage', result.message, true);
-                }
-            } catch (error) {
-                showMessage('createUserMessage', 'Failed to create user. Please try again.', true);
-                console.error('Create user error:', error);
-            }
-        });
-
-        // Proceed to app
-        document.getElementById('proceedBtn').addEventListener('click', function() {
-            redirectToApp();
-        });
-
-        // FIXED: Redirect to main app
-        function redirectToApp() {
-            // Store the authenticated state
-            localStorage.setItem('luaseel_authenticated', 'true');
-            
-            // Redirect to the main application page
-            // Replace this with your actual main app URL
-            window.location.href = '/app.html'; // or wherever your main app is hosted
-            
-            // Fallback: If app.html doesn't exist, show the main interface inline
-            // You can uncomment this if you want to show the main app in the same page
-            // showMainApp();
-        }
-
-        // Optional: Function to show main app inline (if you don't want separate pages)
-        function showMainApp() {
-            document.body.innerHTML = `
-                <div style="padding: 2rem; text-align: center;">
-                    <h1 style="color: white; font-family: 'Space Grotesk', sans-serif;">
-                        Welcome to LuaSeel Platform
-                    </h1>
-                    <p style="color: #888; margin: 1rem 0;">
-                        Logged in as: ${currentUser.username} (${currentUser.role})
-                    </p>
-                    <div style="margin-top: 2rem;">
-                        <button onclick="location.reload()" style="
-                            background: linear-gradient(135deg, #ffffff, #cccccc);
-                            color: #000000;
-                            border: none;
-                            padding: 1rem 2rem;
-                            border-radius: 10px;
-                            font-weight: 600;
-                            cursor: pointer;
-                            margin-right: 1rem;
-                        ">Back to Login</button>
-                        <button onclick="logout()" style="
-                            background: rgba(255,255,255,0.05);
-                            border: 1px solid rgba(255,255,255,0.2);
-                            color: #ffffff;
-                            padding: 1rem 2rem;
-                            border-radius: 10px;
-                            cursor: pointer;
-                        ">Logout</button>
-                    </div>
-                </div>
-            `;
         }
 
         // Logout function
         async function logout() {
             try {
-                await fetch('/api/fetch/script', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'logout',
-                        session_token: sessionToken
-                    })
-                });
+                if (sessionToken) {
+                    await fetch('/api/fetch/script', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'logout',
+                            session_token: sessionToken
+                        })
+                    });
+                }
             } catch (error) {
                 console.error('Logout error:', error);
             }
             
-            // Clear local storage and reload
             localStorage.removeItem('luaseel_session');
             localStorage.removeItem('luaseel_authenticated');
-            location.reload();
+            window.location.href = '/index.html';
         }
 
-        // Debug admin status
-        document.getElementById('debugBtn').addEventListener('click', async function() {
-            const btn = this;
-            btn.disabled = true;
-            btn.textContent = 'Checking...';
+        // Utility functions
+        function generateId(length = 12) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            return Array.from({length}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+        }
+
+        function generateAPIKey() {
+            return generateId(32);
+        }
+
+        // Create loader script
+        function createObfuscatedLoader(scriptId, apiKey) {
+            const authKey = `${scriptId}_${apiKey}_fetch`;
+            const keyParts = [];
+            const chunkSize = 3;
+            
+            for (let i = 0; i < authKey.length; i += chunkSize) {
+                keyParts.push(authKey.substring(i, i + chunkSize));
+            }
+            
+            const dummyParts = Array.from({length: 10}, () => generateId(3));
+            const allParts = [...keyParts, ...dummyParts];
+            
+            // Shuffle
+            for (let i = allParts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allParts[i], allParts[j]] = [allParts[j], allParts[i]];
+            }
+            
+            const realIndices = keyParts.map(part => allParts.indexOf(part) + 1);
+            
+            return `local loader = {}
+local parts = {}
+${allParts.map((part, index) => `parts[${index + 1}] = "${part}"`).join('\n')}
+
+local function getAuthKey()
+    local indices = {${realIndices.join(', ')}}
+    local key = ""
+    for _, idx in ipairs(indices) do
+        if parts[idx] then
+            key = key .. parts[idx]
+        else
+            error("Invalid index: " .. tostring(idx))
+        end
+    end
+    return key
+end
+
+local function getUserData()
+    local data = {
+        timestamp = os.time(),
+        session = tostring(math.random(100000, 999999))
+    }
+    
+    if game then
+        data.env = "roblox"
+        data.game_id = game.GameId or 0
+        data.place_id = game.PlaceId or 0
+        if game.Players and game.Players.LocalPlayer then
+            local player = game.Players.LocalPlayer
+            data.player = {
+                name = player.Name or "unknown",
+                user_id = player.UserId or 0,
+                account_age = player.AccountAge or 0
+            }
+        end
+    end
+    
+    data.executor = "unknown"
+    local executors = {"syn", "Synapse", "krnl", "KRNL", "ScriptWare", "Delta", "Fluxus", "Oxygen"}
+    for _, exec in ipairs(executors) do
+        if _G[exec] or (getgenv and getgenv()[exec]) then
+            data.executor = exec:lower()
+            break
+        end
+    end
+    
+    return data
+end
+
+local function loadScript()
+    local authKey = getAuthKey()
+    local serverUrl = "https://luaseel.vercel.app/api/fetch/script"
+    local userData = getUserData()
+    
+    print("LuaSeel: Connecting to secure server...")
+    
+    local requestData = {
+        auth_key = authKey,
+        user_data = userData,
+        action = "fetch_script"
+    }
+    
+    local success, response = pcall(function()
+        local httpService = game:GetService("HttpService")
+        local jsonData = httpService:JSONEncode(requestData)
+        
+        if request then
+            return request({
+                Url = serverUrl,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = jsonData
+            })
+        elseif http_request then
+            return http_request({
+                Url = serverUrl,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = jsonData
+            })
+        elseif syn and syn.request then
+            return syn.request({
+                Url = serverUrl,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = jsonData
+            })
+        else
+            error("No HTTP method available")
+        end
+    end)
+    
+    if not success or not response then
+        error("Connection failed: " .. tostring(response))
+        return
+    end
+    
+    print("LuaSeel: Server response received (Status: " .. response.StatusCode .. ")")
+    
+    if response.StatusCode ~= 200 then
+        error("Server error " .. response.StatusCode .. ": " .. (response.Body or "Unknown error"))
+        return
+    end
+    
+    local responseData
+    success, responseData = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(response.Body)
+    end)
+    
+    if not success or not responseData then
+        error("Invalid server response")
+        return
+    end
+    
+    if responseData.success ~= true then
+        error("Authentication failed: " .. (responseData.message or "Access denied"))
+        return
+    end
+    
+    if responseData.script then
+        print("LuaSeel: Script authenticated successfully, executing...")
+        
+        local scriptFunc, loadError = loadstring(responseData.script)
+        if not scriptFunc then
+            error("Script compilation failed: " .. tostring(loadError))
+            return
+        end
+        
+        spawn(function()
+            local execSuccess, execError = pcall(scriptFunc)
+            if not execSuccess then
+                warn("Script execution error: " .. tostring(execError))
+            end
+        end)
+    else
+        error("No script received from server")
+    end
+end
+
+spawn(function()
+    wait(0.1)
+    loadScript()
+end)
+
+loader.load = loadScript
+loader.reload = loadScript
+return loader`;
+        }
+
+        // Panel switching
+        function switchPanel(panelName) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.content-panel').forEach(panel => panel.classList.remove('active'));
+            
+            const clickedButton = document.querySelector(`[onclick="switchPanel('${panelName}')"]`);
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+            document.getElementById(panelName).classList.add('active');
+            
+            if (panelName === 'manage') {
+                loadScriptList();
+            }
+        }
+
+        // Upload form handler
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const scriptName = formData.get('scriptName');
+            const luaCode = formData.get('luaCode');
+            const description = formData.get('description') || '';
+            
+            const scriptId = generateId(12);
+            const apiKey = generateAPIKey();
+            
+            document.getElementById('uploadResult').innerHTML = `
+                <div class="result-box">
+                    <div class="result-header">Uploading to secure storage<span class="loading"></span></div>
+                    <div>Processing your script and generating protected loader...</div>
+                </div>
+            `;
             
             try {
                 const response = await fetch('/api/fetch/script', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        action: 'debug_admin'
+                        action: 'upload_script',
+                        session_token: sessionToken,
+                        script_data: { script_id: scriptId, api_key: apiKey, script_code: luaCode, script_name: scriptName, description }
                     })
                 });
-                
+
                 const result = await response.json();
+                if (!result.success) throw new Error(result.message || 'Upload failed');
+
+                scripts[scriptId] = {
+                    name: scriptName, code: luaCode, description, apiKey,
+                    created: new Date().toISOString(), id: scriptId
+                };
+                localStorage.setItem('luaSealScripts', JSON.stringify(scripts));
                 
-                if (result.success) {
-                    const debug = result.debug;
-                    let message = `
-                        <div style="font-family: monospace; font-size: 0.8rem; text-align: left; background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                            <strong>Debug Info:</strong><br>
-                            User Exists: ${debug.user_exists}<br>
-                            Credentials Exist: ${debug.credentials_exist}<br>
-                            ${debug.user_data ? `User: ${debug.user_data.username} (${debug.user_data.role})<br>Created: ${debug.user_data.created}<br>Has Password: ${debug.user_data.has_password}` : 'No user data'}<br>
-                            ${debug.credential_data ? `Credentials: ${debug.credential_data.username}<br>Has Password: ${debug.credential_data.has_password}` : 'No credential data'}
+                const loaderCode = createObfuscatedLoader(scriptId, apiKey);
+                
+                document.getElementById('uploadResult').innerHTML = `
+                    <div class="result-box success">
+                        <div class="result-header">Upload Complete!</div>
+                        <div>Your script has been securely uploaded and is ready for distribution.</div>
+                    </div>
+                    
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <div class="info-card-label">Script ID</div>
+                            <div class="info-card-value">${scriptId}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-card-label">Access Key</div>
+                            <div class="info-card-value">${apiKey}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-box">
+                        <div class="result-header">Protected Loader Script</div>
+                        <div>Share this script instead of your original code:</div>
+                        <div class="code-display">${loaderCode}</div>
+                        <button class="icon-btn" onclick="copyToClipboard('${loaderCode.replace(/'/g, "\\'")}')">Copy Loader</button>
+                    </div>
+                `;
+                
+                e.target.reset();
+                
+            } catch (error) {
+                document.getElementById('uploadResult').innerHTML = `
+                    <div class="result-box error">
+                        <div class="result-header">Upload Failed</div>
+                        <div>${error.message}</div>
+                    </div>
+                `;
+            }
+        });
+
+        // Access form handler
+        document.getElementById('accessForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const scriptId = formData.get('scriptId');
+            const apiKey = formData.get('apiKey');
+            const authKey = `${scriptId}_${apiKey}_fetch`;
+            
+            document.getElementById('accessResult').innerHTML = `
+                <div class="result-box">
+                    <div class="result-header">Retrieving script<span class="loading"></span></div>
+                    <div>Authenticating and fetching your script from secure storage...</div>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/api/fetch/script', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'fetch_script',
+                        auth_key: authKey,
+                        user_data: { access_type: 'web_interface', timestamp: Date.now() }
+                    })
+                });
+
+                const result = await response.json();
+                if (!result.success) throw new Error(result.message || 'Access denied');
+                
+                document.getElementById('accessResult').innerHTML = `
+                    <div class="result-box success">
+                        <div class="result-header">Script Retrieved Successfully</div>
+                        <div>Original source code loaded from secure storage.</div>
+                    </div>
+                    
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <div class="info-card-label">Script ID</div>
+                            <div class="info-card-value">${scriptId}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-card-label">Size</div>
+                            <div class="info-card-value">${result.script.length} characters</div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-box">
+                        <div class="result-header">Original Source Code</div>
+                        <div class="code-display">${result.script}</div>
+                        <button class="icon-btn" onclick="copyToClipboard('${result.script.replace(/'/g, "\\'")}')">Copy Code</button>
+                    </div>
+                `;
+                
+            } catch (error) {
+                // Try local fallback
+                if (scripts[scriptId] && scripts[scriptId].apiKey === apiKey) {
+                    const script = scripts[scriptId];
+                    document.getElementById('accessResult').innerHTML = `
+                        <div class="result-box success">
+                            <div class="result-header">Script Found (Local Cache)</div>
+                            <div>Retrieved from browser storage.</div>
+                        </div>
+                        <div class="result-box">
+                            <div class="result-header">Source Code</div>
+                            <div class="code-display">${script.code}</div>
+                            <button class="icon-btn" onclick="copyToClipboard('${script.code.replace(/'/g, "\\'")}')">Copy Code</button>
                         </div>
                     `;
-                    showMessage('loginMessage', message, false);
                 } else {
-                    showMessage('loginMessage', 'Debug failed: ' + result.message, true);
+                    document.getElementById('accessResult').innerHTML = `
+                        <div class="result-box error">
+                            <div class="result-header">Access Denied</div>
+                            <div>${error.message}</div>
+                        </div>
+                    `;
                 }
-            } catch (error) {
-                showMessage('loginMessage', 'Debug request failed', true);
             }
-            
-            btn.disabled = false;
-            btn.textContent = 'Debug Admin Status';
         });
 
-        // Reset admin
-        document.getElementById('resetAdminBtn').addEventListener('click', async function() {
-            if (!confirm('Reset admin user? This will recreate the admin account.')) return;
+        // Load script list
+        function loadScriptList() {
+            const scriptList = document.getElementById('scriptList');
             
-            const btn = this;
-            btn.disabled = true;
-            btn.textContent = 'Resetting...';
-            
-            try {
-                const response = await fetch('/api/fetch/script', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'reset_admin'
-                    })
-                });
-                
-                const result = await response.json();
-                showMessage('loginMessage', result.message, !result.success);
-                
-            } catch (error) {
-                showMessage('loginMessage', 'Reset request failed', true);
+            if (Object.keys(scripts).length === 0) {
+                scriptList.innerHTML = `
+                    <div class="result-box">
+                        <div class="result-header">No Scripts Yet</div>
+                        <div>Upload your first script to get started.</div>
+                    </div>
+                `;
+                return;
             }
             
-            btn.disabled = false;
-            btn.textContent = 'Reset Admin (if needed)';
-        });
+            let html = '';
+            for (const [id, script] of Object.entries(scripts)) {
+                html += `
+                    <div class="script-card">
+                        <div class="script-card-header">
+                            <div>
+                                <div class="script-name">${script.name}</div>
+                                <div class="script-meta">${id} • ${script.code.length} chars • ${new Date(script.created).toLocaleDateString()}</div>
+                            </div>
+                            <div class="script-actions">
+                                <button class="icon-btn" onclick="copyToClipboard('${id}')">Copy ID</button>
+                                <button class="icon-btn" onclick="copyToClipboard('${script.apiKey}')">Copy Key</button>
+                                <button class="icon-btn" onclick="deleteScript('${id}')">Delete</button>
+                            </div>
+                        </div>
+                        <div class="script-description">${script.description || 'No description'}</div>
+                    </div>
+                `;
+            }
+            scriptList.innerHTML = html;
+        }
 
-        // Initialize
-        createParticles();
-        
-        // Check for existing session on load
-        window.addEventListener('load', async function() {
-            const hasSession = await checkSession();
-            if (!hasSession) {
-                // Show login form
-                document.getElementById('loginSection').style.display = 'block';
+        // Utility functions
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = originalText, 1500);
+            });
+        }
+
+        function deleteScript(scriptId) {
+            if (confirm(`Delete "${scripts[scriptId].name}"?`)) {
+                delete scripts[scriptId];
+                localStorage.setItem('luaSealScripts', JSON.stringify(scripts));
+                loadScriptList();
             }
-        });
+        }
+
+        // Initialize application
+        async function initializeApp() {
+            createParticles();
+            
+            const isAuthenticated = await checkAuthentication();
+            if (isAuthenticated) {
+                // Hide loading screen and show workspace
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('workspace').classList.add('loaded');
+                
+                // Set up logout button
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+                
+                loadScriptList();
+                
+                // Handle URL hash
+                const hash = window.location.hash.substring(1);
+                if (hash && scripts[hash]) {
+                    switchPanel('access');
+                    document.querySelector('input[name="scriptId"]').value = hash;
+                }
+            }
+        }
+
+        // Start the application
+        window.addEventListener('load', initializeApp);
     </script>
 </body>
 </html>
